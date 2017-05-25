@@ -1,33 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
+    <Properties>
+        <Property name="logDir">${sys:mule.home}/logs</Property>
+        <Property name="appName">interop-scheme-adapter</Property>
+    </Properties>
     <Appenders>
-        <RollingFile name="file" fileName="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}interop-scheme-adapter.log" 
-                 filePattern="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}interop-scheme-adapter-%i.log">
-            <PatternLayout pattern="%d [%t] %-5p %c - %m%n" />
-            <SizeBasedTriggeringPolicy size="10 MB" />
-            <DefaultRolloverStrategy max="10"/>
+       <RollingFile name="diagnostic" fileName="${logDir}/${appName}.log"
+                     filePattern="${logDir}/${appName}-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="[%d{ISO8601}] %-5p [%t] %c{1}: %m%n" />
+            <Policies>
+            	<TimeBasedTriggeringPolicy />
+                <!-- <SizeBasedTriggeringPolicy size="200MB" /> -->
+            </Policies>
+            <DefaultRolloverStrategy max="10" />
+            <ThresholdFilter level="INFO"  onMatch="ACCEPT" onMismatch="DENY"/>
         </RollingFile>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%-5p %d [%t] %c{1}: %m%n" />
+        </Console>
     </Appenders>
     <Loggers>
-        <!-- CXF is used heavily by Mule for web services -->
-        <AsyncLogger name="org.apache.cxf" level="WARN"/>
+        <Logger name="javax.jmdns.impl.DNSIncoming" level="ERROR" />
+        <Logger name="httpclient.wire" level="INFO" />
+        <Logger name="org.apache.commons.httpclient" level="INFO" />
+        <Logger name="org.mule.util.queue.DualRandomAccessFileQueueStoreDelegate" level="INFO" />
+        <Logger name="org.mule.transformer" level="WARN" />
+        <Logger name="org.jetel.graph" level="WARN" />
+        <Logger name="org.mule.transport.service.DefaultTransportServiceDescriptor" level="WARN" />
+        <Logger name="com.sforce" level="INFO" />
+        <Logger name="org.mule.module.launcher.DeploymentDirectoryWatcher" level="WARN" />
+        <Logger name="org.mule.transformer.graph" level="WARN" />
+        <Logger name="com.mulesoft.module.batch" level="WARN" />
+        <Logger name="org.mule.transport.jms.JmsMessageUtils" level="ERROR" />
+        <Logger name="org.mule.lifecycle.AbstractLifecycleManager" level="WARN" />
 
-        <!-- Apache Commons tend to make a lot of noise which can clutter the log-->
-        <AsyncLogger name="org.apache" level="WARN"/>
-
-        <!-- Reduce startup noise -->
-        <AsyncLogger name="org.springframework.beans.factory" level="WARN"/>
-
-        <!-- Mule classes -->
-        <AsyncLogger name="org.mule" level="INFO"/>
-        <AsyncLogger name="com.mulesoft" level="INFO"/>
-
-        <!-- Reduce DM verbosity -->
-        <AsyncLogger name="org.jetel" level="WARN"/>
-        <AsyncLogger name="Tracking" level="WARN"/>
-        
-        <AsyncRoot level="INFO">
-            <AppenderRef ref="file" />
-        </AsyncRoot>
+        <Root level="INFO">
+            <!-- log levels are set as filters on the appenders -->
+            <AppenderRef ref="diagnostic" />
+            
+        </Root>
     </Loggers>
 </Configuration>

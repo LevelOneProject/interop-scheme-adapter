@@ -1,0 +1,116 @@
+#%RAML 1.0
+title: RAML for Scheme Adapter
+version: v1
+baseUri: https://localhost:8088/scheme/adapter/{version}
+
+types:
+
+  Person:
+    type: object
+    properties:
+      identifier: string
+      identifierType?: string
+      submissionUrl?: string
+      
+  Amount:
+    type: object
+    properties:
+      amount: number
+      currency: string
+
+  QuoteRequest:
+    type: object
+    properties:
+      payer: Person
+      payee: Person
+      transferType: string
+      amountType: string
+      amount: Amount
+      fees: Amount
+      
+  QuoteResponse:
+    type: object
+    properties:
+      transferId: string
+      receiveAmount: Amount
+      payeeFee: Amount
+      payeeCommission: Amount
+      ipr: string
+      
+  PaymentRequest:
+    type: object
+    properties:
+      ipr: string
+      sourceAmount: 
+        type: number
+        format: float
+      sourceAccount: string
+      connectorAccount: string
+      sourceExpiryDuration: integer
+      
+  PaymentResponse:
+    type: object
+    properties:
+      paymentId: string
+      connectorAccount: string
+      status: 
+        type:
+          enum: [executed, rejected, expired]
+      rejectionMessage: string
+      fulfillment: string
+      
+
+  HealthStatus:
+    type: object
+    properties: 
+      status:
+        type: string
+        required: true
+
+/quotes/{quoteId}:
+    displayName: /v1/quotes/:quoteId
+    uriParameters:
+      quoteId: string
+    post:
+        description: Submit a request for a quote.
+        body:
+          application/json:
+           type: QuoteRequest
+           
+        responses:
+          200:
+            body:
+              application/json:
+               type: QuoteResponse
+               #example: !include payments-response-sample.json
+
+
+               
+/health:
+  displayName: HealthCheck resource
+  description: This resource is included to provide a simple response to indicate that the API is up and running.
+  get:
+    responses: 
+      200:
+        body: 
+          application/json: 
+            type: HealthStatus
+            example: |
+              { 
+                "status" : "ok" 
+              }
+
+/payments:
+  displayName: Payments
+  description: Endpoint to submit the payments
+  post:
+      body:
+        application/json:
+         type: PaymentRequest
+         #example: !include invoice-request-sample.json
+      responses:
+        201:
+          description: "ok"
+          body:
+              application/json:
+               type: PaymentResponse           

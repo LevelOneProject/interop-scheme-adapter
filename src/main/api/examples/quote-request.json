@@ -1,0 +1,20 @@
+{
+   "payer": {
+     "identifier": "92806391",
+     "identifierType": "eur"
+   },
+   "payee": {
+     "identifier": "30754016",
+     "identifierType": "eur",
+   },
+   "transferType": "p2p",
+   "amountType": "SEND",
+   "amount": {
+     "amount": "10",
+     "currency": "USD"
+   },
+   "fees": {
+     "amount": "0.25",
+     "currency": "USD"
+   }
+}

@@ -1,0 +1,152 @@
+swagger: '2.0'
+info:
+  title: interop-scheme-adapter
+  description: Scheme Adapter
+  version: V1
+
+#host: ec2-52-37-54-209.us-west-2.compute.amazonaws.com:8088
+schemes:
+  - http
+  - https
+
+basePath: /scheme/adapter/v1
+consumes:
+  - application/json
+produces:
+  - application/json
+
+
+paths:
+  /quotes/{quoteId}:
+    post:
+      description: Request for a quote
+      parameters:
+        - name: quoteId
+          in: path
+          description: A quote ID
+          required: true
+          type: string
+        - name: Quote Request
+          in: body
+          description: request object
+          schema:
+            $ref: '#/definitions/QuoteRequest'
+      
+      responses:
+        200:
+          description: quote response
+          schema:
+            $ref: '#/definitions/QuoteResponse'
+            
+  /payments:
+    post:
+      summary: Submit Payment
+      parameters:
+        - name: Payment Request
+          in: body
+          schema:
+            $ref: '#/definitions/PaymentRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/PaymentResponse'
+        
+
+definitions:
+
+  QuoteRequest:
+    title: Quote Request
+    type: object
+    properties:
+      payer:
+        $ref: '#/definitions/Person'
+      payee:
+        $ref: '#/definitions/Person'
+      transferType:
+        type: string
+      amountType:
+        type: string
+    required:
+      - payer
+      - payee
+      - transferType
+      - amountType
+      
+  QuoteResponse:
+    title: Quote Response
+    type: object
+    properties:
+      transferId:
+        type: string
+      receiveAmount:
+        $ref: '#/definitions/Amount'
+      payeeFee:
+        $ref: '#/definitions/Amount'
+      payeeCommission:
+        $ref: '#/definitions/Amount'
+      ipr:
+        type: string
+        
+  PaymentRequest:
+    title: Payment Request
+    type: object
+    properties:
+      ipr:
+        type: string
+      sourceAmount:
+        type: number
+        format: decimal
+      sourceAccount:
+        type: string
+      connectorAccount:
+        type: string
+      sourceExpiryDuration:
+        type: number
+        format: integer
+        
+  PaymentResponse:
+    title: Payment Response
+    type: object
+    properties:
+      paymentId:
+        type: string
+      connectorAccount:
+        type: string
+      status:
+        $ref: '#/definitions/StatusEnum'
+      rejectionMessage:
+        type: string
+      fulfillment:
+        type: string
+  
+  Amount:
+    title: Amount
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+      currency:
+        type: string
+        
+  Person:
+    title: Person Object
+    type: object
+    properties:
+      identifier:
+        type: string
+      identifierType:
+        type: string
+      submissionUrl:
+        type: string
+    required:
+      - identifier
+  
+  StatusEnum:
+    title: statusEnum
+    type: string
+    enum:
+    - executed
+    - rejected
+    - expired      

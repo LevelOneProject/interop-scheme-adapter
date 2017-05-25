@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+  <flow name="scheme-adapter-documentation">
+    <http:listener config-ref="api-httpListenerConfig" path="${spsp-proxy-service.basePath}/documentation/*"
+                   doc:name="HTTP" allowedMethods="GET"/>
+    <http:static-resource-handler resourceBase="${app.home}/classes/documentation/dist"
+                                  doc:name="HTTP Static Resource Handler"
+                                  defaultFile="index.html"/>
+  </flow>
+
+  <flow name="scheme-adapter-documentation-redirect">
+    <http:listener config-ref="api-httpListenerConfig" path="${spsp-proxy-service.basePath}/open-api"
+                   doc:name="HTTP" allowedMethods="GET">
+      <http:response-builder statusCode="302">
+        <http:header headerName="Location" value="${spsp.client.openapi.documentation.url}"/>
+      </http:response-builder>
+    </http:listener>
+    <logger level="INFO"
+            message="Redirecting for documenation ${spsp.client.openapi.documentation.url}"
+            category="com.l1p.interop.spsp.client.openapi" doc:name="logger"/>
+  </flow>
+</mule>
