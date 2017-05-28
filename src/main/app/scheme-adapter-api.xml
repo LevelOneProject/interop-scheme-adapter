@@ -1,44 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:spring="http://www.springframework.org/schema/beans"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:metrics="http://www.mulesoft.org/schema/mule/metrics"
+    xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd
+http://www.mulesoft.org/schema/mule/metrics http://www.mulesoft.org/schema/mule/metrics/current/mule-metrics.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+    
+    <!-- Import common xml file that imports properties files at various levels -->
+	<spring:beans>
+        <spring:import resource="classpath:services-common.xml" />
+        <spring:import resource="classpath:metrics.xml" />
+    </spring:beans>
+
+    <spring:beans>
+        <spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>
+    </spring:beans>
+    
+    <!-- <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router" keepRamlBaseUri="false"/> -->
     <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router"/>
     <flow name="scheme-adapter-main">
-        <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/*" doc:name="HTTP"/>
+        <set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'http.TraceID' == empty) ? java.util.UUID.randomUUID() : message.inboundProperties.'http.query.TraceID']" doc:name="set-TraceID"/>
+        <logger level="INFO"
+                message="Received request with TraceID=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
+                category="com.l1p.interop.scheme.adapter.api-main" doc:name="Logger"/>
         <apikit:router config-ref="scheme-adapter-config" doc:name="APIkit Router"/>
-        <exception-strategy ref="scheme-adapter-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+        <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
     <flow name="scheme-adapter-console">
-        <http:listener config-ref="api-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.consolePath}/*" doc:name="HTTP"/>
         <apikit:console config-ref="scheme-adapter-config" doc:name="APIkit Console"/>
     </flow>
     
-    <apikit:mapping-exception-strategy name="scheme-adapter-apiKitGlobalExceptionMapping">
+    <apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">
         <apikit:mapping statusCode="404">
             <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
-            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error"  doc:name="metrics-count">
+                <metrics:metric-keys><metrics:metric-key>ResourceNotFound</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Resource not found" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
         </apikit:mapping>
         <apikit:mapping statusCode="405">
             <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
-            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
+                <metrics:metric-keys><metrics:metric-key>MethodNotAllowed</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Method Not Allowed" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
         </apikit:mapping>
         <apikit:mapping statusCode="415">
             <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
-            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
+                <metrics:metric-keys><metrics:metric-key>UnsupportedMediaType</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Unsupported MediaType" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
         </apikit:mapping>
         <apikit:mapping statusCode="406">
             <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
-            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
+                <metrics:metric-keys><metrics:metric-key>NotAcceptable</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Not Acceptable" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
         </apikit:mapping>
         <apikit:mapping statusCode="400">
-            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
-            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+            <!-- <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" /> -->
+            <apikit:exception value="org.mule.module.http.internal.request.ResponseValidatorException" />
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
+                <metrics:metric-keys><metrics:metric-key>BadRequest</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Bad request" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="500">
+            <apikit:exception value="org.mule.api.transformer.TransformerMessagingException" />
+            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
+                <metrics:metric-keys><metrics:metric-key>TransformationException</metrics:metric-key></metrics:metric-keys>
+            </metrics:inc-count>
+            <set-session-variable variableName="errorMessageId" value="Transformer Messaging Exception" doc:name="set-errorMessageId"/>
+            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
         </apikit:mapping>
     </apikit:mapping-exception-strategy>
 </mule>

@@ -12,7 +12,7 @@ types:
       identifierType?: string
       submissionUrl?: string
       
-  Amount:
+  Amount: 
     type: object
     properties:
       amount: number
@@ -25,8 +25,8 @@ types:
       payee: Person
       transferType: string
       amountType: string
-      amount: Amount
-      fees: Amount
+      amount?: Amount
+      fees?: Amount
       
   QuoteResponse:
     type: object
@@ -35,7 +35,7 @@ types:
       receiveAmount: Amount
       payeeFee: Amount
       payeeCommission: Amount
-      ipr: string
+      ipr?: string
       
   PaymentRequest:
     type: object
@@ -68,22 +68,33 @@ types:
         required: true
 
 /quotes/{quoteId}:
-    displayName: /v1/quotes/:quoteId
-    uriParameters:
-      quoteId: string
+  displayName: /v1/quotes/:quoteId
+  uriParameters:
+    quoteId: string
+  post:
+      description: Submit a request for a quote.
+      body:
+        application/json:
+         type: QuoteRequest
+         
+      responses:
+        200:
+          body:
+            application/json:
+             type: QuoteResponse
+             #example: !include payments-response-sample.json
+  /fees:
+    displayName: /v1/quotes/{quoteId}/fees
     post:
-        description: Submit a request for a quote.
-        body:
-          application/json:
-           type: QuoteRequest
-           
-        responses:
-          200:
-            body:
-              application/json:
-               type: QuoteResponse
-               #example: !include payments-response-sample.json
-
+      description: Post a request to get receiver dfsp fees
+      body:
+        application/json:
+          type: QuoteRequest
+      responses:
+        200:
+          body:
+            application/json:
+             type: QuoteResponse
 
                
 /health:
