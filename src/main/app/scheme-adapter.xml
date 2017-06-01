@@ -11,6 +11,16 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 
 	<http:request-config name="dfsp-quote-service-http-config"  host="${dfsp-host}" port="${dfsp-quote-service.port}" basePath="${dfsp-quote-service.basePath}" doc:name="HTTP Request Configuration" responseTimeout="30000"/>
 	
+	<spring:beans>
+		<spring:bean id="sideCarClient"
+			class="com.l1p.interop.scheme.adapter.SideCarClient">
+			<spring:constructor-arg
+				value="${sidecar-server.host}" />
+			<spring:constructor-arg
+				value="${sidecar-server.port}" />
+		</spring:bean>
+	</spring:beans>
+	
 	<flow name="get:/health:scheme-adapter-config">
         <set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload"/>
     </flow>
@@ -22,6 +32,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
         <logger level="INFO"
                 message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to #[sessionVars.receiverUrl]/quotes/#[sessionVars.quoteId]/fees, method=post"
                 category="com.l1p.interop.scheme.adapter.quote" doc:name="logger"/>
+        <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component>
     	
     </flow>
     
