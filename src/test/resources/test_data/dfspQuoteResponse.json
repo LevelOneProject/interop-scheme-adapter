@@ -1,0 +1,15 @@
+{
+      "quoteId": "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
+      "receiveAmount": {
+        "amount": "9.25",
+        "currency": "USD"
+      },
+      "payeeFee": {
+        "amount": "1",
+        "currency": "USD"
+      },
+      "payeeCommission": {
+        "amount": "1",
+        "currency": "USD"
+      }
+}
