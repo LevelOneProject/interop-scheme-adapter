@@ -7,7 +7,7 @@
    "payee": {
      "identifier": "30754016",
      "identifierType": "eur",
-     "submissionUrl": "http://localhost:8010"
+     "submissionUrl": "localhost"
    },
    "amountType": "SEND",
    "amount": {
