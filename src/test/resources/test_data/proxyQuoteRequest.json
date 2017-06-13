@@ -9,7 +9,7 @@
      "identifierType": "eur",
      "submissionUrl": "localhost"
    },
-   "amountType": "SEND",
+   "amountType": "RECEIVE",
    "amount": {
      "amount": "10",
      "currency": "USD"
