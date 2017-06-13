@@ -4,14 +4,15 @@
 	xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-	<http:request-config name="dfsp-quote-service-http-config"  host="${dfsp-host}" port="${dfsp-quote-service.port}" basePath="${dfsp-quote-service.basePath}" doc:name="HTTP Request Configuration" responseTimeout="30000"/>
+	<!-- <http:request-config name="dfsp-quote-service-http-config"  host="${dfsp-host}" port="${dfsp-quote-service.port}" doc:name="HTTP Request Configuration" responseTimeout="30000"/> -->
+	<http:request-config name="dfsp-quote-service-http-config"  host="localhost" port="8010" doc:name="HTTP Request Configuration" responseTimeout="30000"/>
 	
-	<spring:beans>
+	<!-- <spring:beans>
 		<spring:bean id="sideCarClient"
 			class="com.l1p.interop.scheme.adapter.SideCarClient">
 			<spring:constructor-arg
@@ -19,34 +20,34 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 			<spring:constructor-arg
 				value="${sidecar-server.port}" />
 		</spring:bean>
-	</spring:beans>
+	</spring:beans> -->
 	
 	<flow name="get:/health:scheme-adapter-config">
         <set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload"/>
     </flow>
     
-    <flow name="post:/quotes/{quoteId}:application/json:scheme-adapter-config">
+    <flow name="post:/quotes:application/json:scheme-adapter-config">
     	<set-session-variable variableName="quoteId" value="#[message.inboundProperties.'http.uri.params'.quoteId]" doc:name="uri-parameter quoteId"/>
         <json:json-to-object-transformer returnClass="java.util.Map" doc:name="Convert JSON Payload to Map"/>
-        <set-session-variable variableName="receiverUrl" value="#[payload.payee.submissionUrl]" doc:name="Set Receiver URL"/>
+        <set-session-variable variableName="receiverUrl" value="#[payload.payee.submissionUrl]" doc:name="Save Input Receiver URL"/>
+        <set-session-variable variableName="inputAmount" value="#[payload.amount.amount]" doc:name="Save Input Amount"/>
         <logger level="INFO"
-                message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to #[sessionVars.receiverUrl]/quotes/#[sessionVars.quoteId]/fees, method=post"
+                message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post"
                 category="com.l1p.interop.scheme.adapter.quote" doc:name="logger"/>
-        <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component>
-    	
-    </flow>
-    
-    <flow name="post:/quotes/{quoteId}/fees:application/json:scheme-adapter-config">
-        <set-session-variable variableName="quoteId" value="#[message.inboundProperties.'http.uri.params'.quoteId]" doc:name="uri-parameter quoteId"/>
+        <!-- <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component> -->
+    	<object-to-string-transformer doc:name="Object to String" mimeType="application/json"/>
+    	<outbound-endpoint address="http://#[sessionVars.receiverUrl]:8010/v1/quote" exchange-pattern="request-response"></outbound-endpoint>
         <logger level="INFO"
-                message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to dfsp-api at http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quotes/#[sessionVars.quoteId], method=post"
-                category="com.l1p.interop.scheme.adapter.quote_fees" doc:name="logger"/>
-        <http:request config-ref="dfsp-quote-service-http-config" path="/quotes/#[sessionVars.quoteId]" method="POST" doc:name="HTTP">
-            <http:success-status-code-validator values="200..599"/>
-        </http:request>
-        <!-- <set-payload value=" {       &quot;transferId&quot;: &quot;110ec58a-a0f2-4ac4-8393-c866d813b8d1&quot;,       &quot;receiveAmount&quot;: {         &quot;amount&quot;: 9.25,         &quot;currency&quot;: &quot;USD&quot;       },       &quot;payeeFee&quot;: {         &quot;amount&quot;: 1,         &quot;currency&quot;: &quot;USD&quot;       },       &quot;payeeCommission&quot;: {         &quot;amount&quot;: 1,         &quot;currency&quot;: &quot;USD&quot;       },       &quot;ipr&quot;: &quot;ipr&quot;      }" doc:name="Set Payload"/>
-         -->
-       
+                message="DFSP quote response: #[message.payloadAs(java.lang.String)]" category="com.l1p.interop.scheme.adapter.quote" doc:name="logger"/>
+        <!-- <object-to-string-transformer doc:name="Object to String"/> -->
+        <json:json-to-object-transformer doc:name="Convert DFSP Response to Map" returnClass="java.util.HashMap"/>
+        <set-session-variable variableName="dfsp.quote.response" value="#[payload]" doc:name="save-dfsp-quote-response"/>
+        <set-session-variable variableName="dfspPayeeFee" value="#[payload.payeeFee.amount]" doc:name="Save Payee Fee"/>
+        <set-session-variable variableName="dfspPayeeCommission" value="#[payload.payeeCommission.amount]" doc:name="Save Payee Commission"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <!-- <set-payload value="#[payload]" doc:name="Set Payload"/>
+        <set-property propertyName="http.status"
+			value="#[message.inboundProperties.'http.status']" doc:name="Property" /> -->
     </flow>
     
     <flow name="post:/payments:application/json:scheme-adapter-config">

@@ -17,48 +17,24 @@ produces:
 
 
 paths:
-  /quotes/{quoteId}:
+  /quotes:
     post:
       description: Request for a quote
       parameters:
-        - name: quoteId
-          in: path
-          description: A quote ID
-          required: true
-          type: string
         - name: Quote Request
           in: body
           description: request object
           schema:
             $ref: '#/definitions/QuoteRequest'
-      
+
       responses:
         200:
           description: quote response
           schema:
             $ref: '#/definitions/QuoteResponse'
-  
-  /quotes/{quoteId}/fees:
-    post:
-      description: Submit a request to get dfsp fees
-      parameters:
-        - name: quoteId
-          in: path
-          description: A quote ID
-          required: true
-          type: string
-        - name: body
-          in: body
-          schema:
-            $ref: '#/definitions/QuoteRequest'
-      responses:
-        200:
-          description: successful response
-          schema:
-            $ref: '#/definitions/QuoteResponse'
-            
-            
-            
+
+
+
   /payments:
     post:
       summary: Submit Payment
@@ -72,7 +48,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/PaymentResponse'
-        
+
 
 definitions:
 
@@ -80,28 +56,36 @@ definitions:
     title: Quote Request
     type: object
     properties:
+      quoteId:
+        type: string
+      transferId:
+        type: string
       payer:
         $ref: '#/definitions/Person'
       payee:
         $ref: '#/definitions/Person'
-      transferType:
-        type: string
       amountType:
-        type: string
+        $ref: '#/definitions/AmountTypeEnum'
       amount:
         $ref: '#/definitions/Amount'
       fees:
         $ref: '#/definitions/Amount'
+      transactionType:
+        $ref: '#/definitions/TransactionType'
     required:
+      - quoteId
       - payer
       - payee
-      - transferType
       - amountType
-      
+      - transactionType
+
+
   QuoteResponse:
     title: Quote Response
     type: object
     properties:
+      quoteId:
+        type: string
       transferId:
         type: string
       receiveAmount:
@@ -117,7 +101,7 @@ definitions:
       - receiveAmount
       - payeeFee
       - payeeCommission
-        
+
   PaymentRequest:
     title: Payment Request
     type: object
@@ -134,7 +118,7 @@ definitions:
       sourceExpiryDuration:
         type: number
         format: integer
-        
+
   PaymentResponse:
     title: Payment Response
     type: object
@@ -149,7 +133,7 @@ definitions:
         type: string
       fulfillment:
         type: string
-  
+
   Amount:
     title: Amount
     type: object
@@ -159,7 +143,7 @@ definitions:
         format: double
       currency:
         type: string
-        
+
   Person:
     title: Person Object
     type: object
@@ -172,11 +156,37 @@ definitions:
         type: string
     required:
       - identifier
-  
+
+  TransactionType:
+    title: Transaction Object
+    type: object
+    properties:
+      scenario:
+        type: string
+      initiator:
+        $ref: '#/definitions/InitiatorEnum'
+    required:
+      - initiator
+
   StatusEnum:
     title: statusEnum
     type: string
     enum:
     - executed
     - rejected
-    - expired      
+    - expired
+
+  AmountTypeEnum:
+    title: Amount Type Enum
+    type: string
+    enum:
+    - SEND
+    - RECEIVE
+
+  InitiatorEnum:
+    title: Initiator Enum
+    type: string
+    enum:
+    - PAYER
+    - PAYEE
+    - PROXY

@@ -5,6 +5,52 @@ baseUri: https://localhost:8088/scheme/adapter/{version}
 
 types:
 
+  QuoteRequest:
+    type: object
+    properties:
+      quoteId: string
+      transferId?: string
+      payer: Person
+      payee: Person
+      amountType:
+        type:
+          enum: [SEND, RECEIVE]
+      amount: Amount
+      fees?: Amount
+      transactionType: TransactionType
+
+  QuoteResponse:
+    type: object
+    properties:
+      quoteId: string
+      transferId: string
+      receiveAmount: Amount
+      payeeFee: Amount
+      payeeCommission: Amount
+      ipr?: string
+
+  PaymentRequest:
+    type: object
+    properties:
+      ipr: string
+      sourceAmount:
+        type: number
+        format: float
+      sourceAccount: string
+      connectorAccount: string
+      sourceExpiryDuration: integer
+
+  PaymentResponse:
+    type: object
+    properties:
+      paymentId: string
+      connectorAccount: string
+      status:
+        type:
+          enum: [executed, rejected, expired]
+      rejectionMessage: string
+      fulfillment: string
+
   Person:
     type: object
     properties:
@@ -17,49 +63,15 @@ types:
     properties:
       amount: number
       currency: string
-
-  QuoteRequest:
+  
+  TransactionType:
     type: object
     properties:
-      payer: Person
-      payee: Person
-      transferType: string
-      amountType: string
-      amount?: Amount
-      fees?: Amount
-      
-  QuoteResponse:
-    type: object
-    properties:
-      transferId: string
-      receiveAmount: Amount
-      payeeFee: Amount
-      payeeCommission: Amount
-      ipr?: string
-      
-  PaymentRequest:
-    type: object
-    properties:
-      ipr: string
-      sourceAmount: 
-        type: number
-        format: float
-      sourceAccount: string
-      connectorAccount: string
-      sourceExpiryDuration: integer
-      
-  PaymentResponse:
-    type: object
-    properties:
-      paymentId: string
-      connectorAccount: string
-      status: 
+      scenario: string
+      initiator:
         type:
-          enum: [executed, rejected, expired]
-      rejectionMessage: string
-      fulfillment: string
-      
-
+          enum: [PAYER, PAYEE, PROXY]
+  
   HealthStatus:
     type: object
     properties: 
@@ -67,10 +79,8 @@ types:
         type: string
         required: true
 
-/quotes/{quoteId}:
-  displayName: /v1/quotes/:quoteId
-  uriParameters:
-    quoteId: string
+/quotes:
+  displayName: /v1/quotes/
   post:
       description: Submit a request for a quote.
       body:
@@ -78,24 +88,11 @@ types:
          type: QuoteRequest
          
       responses:
-        200:
+        201:
           body:
             application/json:
              type: QuoteResponse
              #example: !include payments-response-sample.json
-  /fees:
-    displayName: /v1/quotes/{quoteId}/fees
-    post:
-      description: Post a request to get receiver dfsp fees
-      body:
-        application/json:
-          type: QuoteRequest
-      responses:
-        200:
-          body:
-            application/json:
-             type: QuoteResponse
-
                
 /health:
   displayName: HealthCheck resource
