@@ -4,9 +4,11 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mule.tck.junit4.FunctionalTestCase;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 
 import io.restassured.response.Response;
 import static io.restassured.RestAssured.given;
@@ -14,6 +16,8 @@ import static org.junit.Assert.assertEquals;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 public class TestSchemeAdapter extends FunctionalTestCase {
+	
+	protected Logger logger = LoggerFactory.getLogger(getClass());
 	
 	@Rule
     public WireMockRule dfspQuote = new WireMockRule(8010);
@@ -36,12 +40,15 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	@Test
 	public void testQuotes() throws Exception {
-		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteResponse.json");
+		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteMockResponse.json");
 		dfspQuote.stubFor(post(urlMatching("/v1/quote")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
 		
-		String ilpServiceMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
-		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockJson)));
+		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
+		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
 
+		String ilpServiceMockQuoteIPRMockJson = loadResourceAsString("test_data/ilpServiceQuoteIPRMockResponse.json");
+		ilpService.stubFor(get(urlPathMatching("/quoteIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockQuoteIPRMockJson)));
+		
 		String proxyQuoteRequestJson = loadResourceAsString("test_data/proxyQuoteRequest.json");
 		Response response =
         	given().
@@ -50,11 +57,13 @@ public class TestSchemeAdapter extends FunctionalTestCase {
             when().
             	post("http://localhost:8088/scheme/adapter/v1/quotes");
 		
+		logger.info("Response: "+response.asString());
 		
-	    assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
+	    assertEquals("receiveAmount","10",(String)response.jsonPath().get("receiveAmount.amount"));
+		assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
 	    assertEquals("payeeCommission","1",(String)response.jsonPath().get("payeeCommission.amount"));
 	    assertEquals("ipr","Aojf9Pq9_RKgnS3mzvYnZAXvJuvjWnw6r-JXdwitLmHygdQBgdEAAAAAAAAEsDZsZXZlbG9uZS5kZnNwMS5hbGljZS5TdXVPNUdhaDUxSXM3VzVyUkdXdVBnTWVSdGtKOXZPelGBj1BTSy8xLjAKTm9uY2U6IHRsNF93NVRfaGhLM0FFcWJ3Ukg3VVEKRW5jcnlwdGlvbjogbm9uZQpQYXltZW50LUlkOiAxMTBlYzU4YS1hMGYyLTRhYzQtODM5My1jODY2ZDgxM2I4ZDEKCkV4cGlyZXMtQXQ6IDIwMTctMDYtMjBUMDA6MDA6MDEuMDAwWgoKAA==",(String)response.jsonPath().get("ipr"));
-		
+		assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
 	}
 	
 

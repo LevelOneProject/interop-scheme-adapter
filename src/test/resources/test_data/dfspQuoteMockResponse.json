@@ -1,5 +1,5 @@
 {
-      "quoteId": "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
+      "paymentId": "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
       "receiveAmount": {
         "amount": "9.25",
         "currency": "USD"
@@ -11,5 +11,6 @@
       "payeeCommission": {
         "amount": "1",
         "currency": "USD"
-      }
+      },
+      "expiresAt":"2017-06-14T00:00:01.000Z"
 }

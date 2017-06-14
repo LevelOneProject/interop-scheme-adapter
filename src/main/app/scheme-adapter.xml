@@ -25,10 +25,12 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
             returnClass="java.util.Map" doc:name="Convert JSON Payload to Map" />
         <choice doc:name="Check for amountType SEND/RECEIVE">
             <when expression="#[payload.amountType == 'RECEIVE']">
-                <set-session-variable variableName="transferId"
-                    value="#[payload.quoteId]" doc:name="Save Transfer Id" />
-                <set-session-variable variableName="receiverUrl"
-                    value="#[payload.payee.submissionUrl]" doc:name="Save Input Receiver URL" />
+                <set-session-variable variableName="paymentId"
+                    value="#[payload.paymentId]" doc:name="Save Payment Id" />
+                <set-session-variable variableName="payeeUrl"
+                    value="#[payload.payee.url]" doc:name="Save Input Receiver URL" />
+                <set-session-variable variableName="payeeLedgerAccount"
+                    value="#[payload.payee.account]" doc:name="Save Input Receiver URL" />
                 <set-session-variable variableName="inputAmount"
                     value="#[payload.amount.amount]" doc:name="Save Input Amount" />
                 <logger level="INFO"
@@ -37,7 +39,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
                 <!-- <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component> -->
                 <object-to-string-transformer doc:name="Object to String"
                     mimeType="application/json" />
-                <outbound-endpoint address="http://#[sessionVars.receiverUrl]:8010/v1/quote"
+                <outbound-endpoint address="http://#[sessionVars.payeeUrl]:8010/v1/quote"
                     exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint>
                 <logger level="INFO"
                     message="DFSP quote response: #[message.payloadAs(java.lang.String)]"
@@ -52,31 +54,42 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
                 <set-session-variable variableName="dfspPayeeCommission"
                     value="#[payload.payeeCommission.amount]" doc:name="Save Payee Commission" />
                 <set-session-variable variableName="expiresAt"
-                    value="2017-06-20T00:00:01.000Z" doc:name="Save expiresAt" />
+                    value="#[payload.expiresAt]" doc:name="Save expiresAt" />
                 
+                <!-- Section for calling ilp-service createIPR -->
                 <set-session-variable variableName="destinationAmount"
                     value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]" doc:name="Calculate total amount the Payee dfsp needs" />
                 <!-- Section to lookup for destination ledger account -->
-                <set-session-variable variableName="destinationAccount"
-                    value="http://ec2-35-163-231-111.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/alice" doc:name="Save Destination Ledger Account" />
-                
                 <set-session-variable variableName="createIPRRequestMap"
                     value="#[new java.util.HashMap()]" doc:name="Instantiate empty createIPR Request" />
-                <expression-transformer expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.transferId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.destinationAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]" doc:name="Populate createIPR Request"></expression-transformer>
+                <expression-transformer expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]" doc:name="Populate createIPR Request"></expression-transformer>
                 <set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload>
                 <json:object-to-json-transformer doc:name="Object to JSON" />
                 <logger level="INFO"
                     message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/createIPR, method=post"
                     category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-                
-                <http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST" doc:name="HTTP">
+                <http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST" doc:name="Call ilp-service createIPR">
                     <http:success-status-code-validator values="200..599"/>
                 </http:request>
                 <!-- <outbound-endpoint address="http://${ilp-host}:${ilp-service.port}/createIPR"
                     exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint> -->
                 <json:json-to-object-transformer
                     doc:name="Convert ILP-Service Response to Map" returnClass="java.util.HashMap" />
-                <expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap]" doc:name="Update dfsp response with ipr"></expression-transformer>
+ 
+                <expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); payload]" doc:name="Update dfsp response with createIPR response"></expression-transformer>
+ 
+ 				<!-- Section for calling quoteIPR -->
+ 				<set-session-variable variableName="quoteIPRRequestMap"
+                    value="#[new java.util.HashMap()]" doc:name="Instantiate empty quoteIPR Request" />
+                <http:request config-ref="ilp-service-http-config" path="/quoteIPR" method="GET" doc:name="Call ilp-service quoteIPR">
+                	<http:request-builder>
+                        <http:query-param paramName="ipr" value="#[payload.ipr]"/>
+                    </http:request-builder>
+                    <http:success-status-code-validator values="200..599"/>
+                </http:request>
+                 <json:json-to-object-transformer
+                    doc:name="Convert ILP-Service quoteIPR response to Map" returnClass="java.util.HashMap" />   
+                <expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.get(&quot;receiveAmount&quot;).put(&quot;amount&quot;,payload.sourceAmount); sessionVars.dfspQuoteResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.dfspQuoteResponseMap]" doc:name="Update dfsp response with quoteIPR response"></expression-transformer>    
                 <json:object-to-json-transformer doc:name="Object to JSON" />
                 <logger level="INFO"
                     message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
