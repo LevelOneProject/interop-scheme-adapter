@@ -50,10 +50,10 @@ public class TestSchemeAdapter extends FunctionalTestCase {
             when().
             	post("http://localhost:8088/scheme/adapter/v1/quotes");
 		
-		System.out.println("Response: "+response.asString());
-
-//	    assertEquals("payeeFee",(String)response.jsonPath().get("payeeFee.amount"),"1");
-//	    assertEquals("payeeCommission",(String)response.jsonPath().get("payeeCommission.amount"),"1");
+		
+	    assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
+	    assertEquals("payeeCommission","1",(String)response.jsonPath().get("payeeCommission.amount"));
+	    assertEquals("ipr","Aojf9Pq9_RKgnS3mzvYnZAXvJuvjWnw6r-JXdwitLmHygdQBgdEAAAAAAAAEsDZsZXZlbG9uZS5kZnNwMS5hbGljZS5TdXVPNUdhaDUxSXM3VzVyUkdXdVBnTWVSdGtKOXZPelGBj1BTSy8xLjAKTm9uY2U6IHRsNF93NVRfaGhLM0FFcWJ3Ukg3VVEKRW5jcnlwdGlvbjogbm9uZQpQYXltZW50LUlkOiAxMTBlYzU4YS1hMGYyLTRhYzQtODM5My1jODY2ZDgxM2I4ZDEKCkV4cGlyZXMtQXQ6IDIwMTctMDYtMjBUMDA6MDA6MDEuMDAwWgoKAA==",(String)response.jsonPath().get("ipr"));
 		
 	}
 	

@@ -56,9 +56,7 @@ definitions:
     title: Quote Request
     type: object
     properties:
-      quoteId:
-        type: string
-      transferId:
+      paymentId:
         type: string
       payer:
         $ref: '#/definitions/Person'
@@ -70,23 +68,21 @@ definitions:
         $ref: '#/definitions/Amount'
       fees:
         $ref: '#/definitions/Amount'
-      transactionType:
-        $ref: '#/definitions/TransactionType'
+      transferType:
+        $ref: '#/definitions/TransferType'
     required:
-      - quoteId
+      - paymentId
       - payer
       - payee
       - amountType
-      - transactionType
+      - transferType
 
 
   QuoteResponse:
     title: Quote Response
     type: object
     properties:
-      quoteId:
-        type: string
-      transferId:
+      paymentId:
         type: string
       receiveAmount:
         $ref: '#/definitions/Amount'
@@ -96,8 +92,11 @@ definitions:
         $ref: '#/definitions/Amount'
       ipr:
         type: string
+      sourceExpiryDuration:
+        type: number
+        format: integer
     required:
-      - transferId
+      - paymentId
       - receiveAmount
       - payeeFee
       - payeeCommission
@@ -152,13 +151,16 @@ definitions:
         type: string
       identifierType:
         type: string
-      submissionUrl:
+      url:
+        type: string
+      account:
         type: string
     required:
       - identifier
+      - identifierType
 
-  TransactionType:
-    title: Transaction Object
+  TransferType:
+    title: Transfer Object
     type: object
     properties:
       scenario:
@@ -166,7 +168,7 @@ definitions:
       initiator:
         $ref: '#/definitions/InitiatorEnum'
     required:
-      - initiator
+      - scenario
 
   StatusEnum:
     title: statusEnum

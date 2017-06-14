@@ -45,7 +45,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 				<!-- <object-to-string-transformer doc:name="Object to String"/> -->
 				<json:json-to-object-transformer
 					doc:name="Convert DFSP Response to Map" returnClass="java.util.HashMap" />
-				<set-session-variable variableName="dfsp.quote.response"
+				<set-session-variable variableName="dfspQuoteResponseMap"
 					value="#[payload]" doc:name="save-dfsp-quote-response" />
 				<set-session-variable variableName="dfspPayeeFee"
 					value="#[payload.payeeFee.amount]" doc:name="Save Payee Fee" />
@@ -74,7 +74,10 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 		        </http:request>
 		        <!-- <outbound-endpoint address="http://${ilp-host}:${ilp-service.port}/createIPR"
 					exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint> -->
-				
+				<json:json-to-object-transformer
+					doc:name="Convert ILP-Service Response to Map" returnClass="java.util.HashMap" />
+				<expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap]" doc:name="Update dfsp response with ipr"></expression-transformer>
+				<json:object-to-json-transformer doc:name="Object to JSON" />
 			</when>
 			<when expression="#[payload.amountType == 'SEND']">
 				<logger level="INFO"
