@@ -8,8 +8,7 @@ types:
   QuoteRequest:
     type: object
     properties:
-      quoteId: string
-      transferId?: string
+      paymentId: string
       payer: Person
       payee: Person
       amountType:
@@ -17,13 +16,12 @@ types:
           enum: [SEND, RECEIVE]
       amount: Amount
       fees?: Amount
-      transactionType: TransactionType
+      transferType: TransferType
 
   QuoteResponse:
     type: object
     properties:
-      quoteId: string
-      transferId: string
+      paymentId: string
       receiveAmount: Amount
       payeeFee: Amount
       payeeCommission: Amount
@@ -55,8 +53,9 @@ types:
     type: object
     properties:
       identifier: string
-      identifierType?: string
-      submissionUrl?: string
+      identifierType: string
+      url?: string
+      account?: string
       
   Amount: 
     type: object
@@ -64,11 +63,11 @@ types:
       amount: number
       currency: string
   
-  TransactionType:
+  TransferType:
     type: object
     properties:
       scenario: string
-      initiator:
+      initiator?:
         type:
           enum: [PAYER, PAYEE, PROXY]
   

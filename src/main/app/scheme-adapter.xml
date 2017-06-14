@@ -1,106 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+    xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+    xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-	<http:request-config name="ilp-service-http-config" host="${ilp-host}" port="${ilp-service.port}" doc:name="ILP-Service HTTP Request Configuration" responseTimeout="30000"/>
+    <http:request-config name="ilp-service-http-config" host="${ilp-host}" port="${ilp-service.port}" doc:name="ILP-Service HTTP Request Configuration" responseTimeout="30000"/>
 
-	<!-- <spring:beans> <spring:bean id="sideCarClient" class="com.l1p.interop.scheme.adapter.SideCarClient"> 
-		<spring:constructor-arg value="${sidecar-server.host}" /> <spring:constructor-arg 
-		value="${sidecar-server.port}" /> </spring:bean> </spring:beans> -->
+    <!-- <spring:beans> <spring:bean id="sideCarClient" class="com.l1p.interop.scheme.adapter.SideCarClient"> 
+        <spring:constructor-arg value="${sidecar-server.host}" /> <spring:constructor-arg 
+        value="${sidecar-server.port}" /> </spring:bean> </spring:beans> -->
 
-	<flow name="get:/health:scheme-adapter-config">
-		<set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}"
-			doc:name="Set Payload" />
-	</flow>
+    <flow name="get:/health:scheme-adapter-config">
+        <set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}"
+            doc:name="Set Payload" />
+    </flow>
 
-	<flow name="post:/quotes:application/json:scheme-adapter-config">
-		<json:json-to-object-transformer
-			returnClass="java.util.Map" doc:name="Convert JSON Payload to Map" />
-		<choice doc:name="Check for amountType SEND/RECEIVE">
-			<when expression="#[payload.amountType == 'RECEIVE']">
-				<set-session-variable variableName="transferId"
-					value="#[payload.quoteId]" doc:name="Save Transfer Id" />
-				<set-session-variable variableName="receiverUrl"
-					value="#[payload.payee.submissionUrl]" doc:name="Save Input Receiver URL" />
-				<set-session-variable variableName="inputAmount"
-					value="#[payload.amount.amount]" doc:name="Save Input Amount" />
-				<logger level="INFO"
-					message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post"
-					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-				<!-- <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component> -->
-				<object-to-string-transformer doc:name="Object to String"
-					mimeType="application/json" />
-				<outbound-endpoint address="http://#[sessionVars.receiverUrl]:8010/v1/quote"
-					exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint>
-				<logger level="INFO"
-					message="DFSP quote response: #[message.payloadAs(java.lang.String)]"
-					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-				<!-- <object-to-string-transformer doc:name="Object to String"/> -->
-				<json:json-to-object-transformer
-					doc:name="Convert DFSP Response to Map" returnClass="java.util.HashMap" />
-				<set-session-variable variableName="dfspQuoteResponseMap"
-					value="#[payload]" doc:name="save-dfsp-quote-response" />
-				<set-session-variable variableName="dfspPayeeFee"
-					value="#[payload.payeeFee.amount]" doc:name="Save Payee Fee" />
-				<set-session-variable variableName="dfspPayeeCommission"
-					value="#[payload.payeeCommission.amount]" doc:name="Save Payee Commission" />
-				<set-session-variable variableName="expiresAt"
-					value="2017-06-20T00:00:01.000Z" doc:name="Save expiresAt" />
-				
-				<set-session-variable variableName="destinationAmount"
-					value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]" doc:name="Calculate total amount the Payee dfsp needs" />
-				<!-- Section to lookup for destination ledger account -->
-				<set-session-variable variableName="destinationAccount"
-					value="http://ec2-35-163-231-111.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/alice" doc:name="Save Destination Ledger Account" />
-				
-				<set-session-variable variableName="createIPRRequestMap"
-					value="#[new java.util.HashMap()]" doc:name="Instantiate empty createIPR Request" />
-				<expression-transformer expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.transferId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.destinationAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]" doc:name="Populate createIPR Request"></expression-transformer>
-				<set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload>
-				<json:object-to-json-transformer doc:name="Object to JSON" />
-				<logger level="INFO"
-					message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/createIPR, method=post"
-					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-				
-				<http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST" doc:name="HTTP">
-		            <http:success-status-code-validator values="200..599"/>
-		        </http:request>
-		        <!-- <outbound-endpoint address="http://${ilp-host}:${ilp-service.port}/createIPR"
-					exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint> -->
-				<json:json-to-object-transformer
-					doc:name="Convert ILP-Service Response to Map" returnClass="java.util.HashMap" />
-				<expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap]" doc:name="Update dfsp response with ipr"></expression-transformer>
-				<json:object-to-json-transformer doc:name="Object to JSON" />
-			</when>
-			<when expression="#[payload.amountType == 'SEND']">
-				<logger level="INFO"
-					message="Handle RECEIVE portion"
-					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-			</when>
-			<otherwise>
-				<logger level="INFO"
-					message="Handle Default portion"
-					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-			</otherwise>
-		</choice>
+    <flow name="post:/quotes:application/json:scheme-adapter-config">
+        <json:json-to-object-transformer
+            returnClass="java.util.Map" doc:name="Convert JSON Payload to Map" />
+        <choice doc:name="Check for amountType SEND/RECEIVE">
+            <when expression="#[payload.amountType == 'RECEIVE']">
+                <set-session-variable variableName="transferId"
+                    value="#[payload.quoteId]" doc:name="Save Transfer Id" />
+                <set-session-variable variableName="receiverUrl"
+                    value="#[payload.payee.submissionUrl]" doc:name="Save Input Receiver URL" />
+                <set-session-variable variableName="inputAmount"
+                    value="#[payload.amount.amount]" doc:name="Save Input Amount" />
+                <logger level="INFO"
+                    message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                <!-- <expression-component doc:name="Expression"><![CDATA[app.registry.sideCarClient.logForensicEntry(payload)]]></expression-component> -->
+                <object-to-string-transformer doc:name="Object to String"
+                    mimeType="application/json" />
+                <outbound-endpoint address="http://#[sessionVars.receiverUrl]:8010/v1/quote"
+                    exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint>
+                <logger level="INFO"
+                    message="DFSP quote response: #[message.payloadAs(java.lang.String)]"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                <!-- <object-to-string-transformer doc:name="Object to String"/> -->
+                <json:json-to-object-transformer
+                    doc:name="Convert DFSP Response to Map" returnClass="java.util.HashMap" />
+                <set-session-variable variableName="dfspQuoteResponseMap"
+                    value="#[payload]" doc:name="save-dfsp-quote-response" />
+                <set-session-variable variableName="dfspPayeeFee"
+                    value="#[payload.payeeFee.amount]" doc:name="Save Payee Fee" />
+                <set-session-variable variableName="dfspPayeeCommission"
+                    value="#[payload.payeeCommission.amount]" doc:name="Save Payee Commission" />
+                <set-session-variable variableName="expiresAt"
+                    value="2017-06-20T00:00:01.000Z" doc:name="Save expiresAt" />
+                
+                <set-session-variable variableName="destinationAmount"
+                    value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]" doc:name="Calculate total amount the Payee dfsp needs" />
+                <!-- Section to lookup for destination ledger account -->
+                <set-session-variable variableName="destinationAccount"
+                    value="http://ec2-35-163-231-111.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/alice" doc:name="Save Destination Ledger Account" />
+                
+                <set-session-variable variableName="createIPRRequestMap"
+                    value="#[new java.util.HashMap()]" doc:name="Instantiate empty createIPR Request" />
+                <expression-transformer expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.transferId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.destinationAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]" doc:name="Populate createIPR Request"></expression-transformer>
+                <set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload>
+                <json:object-to-json-transformer doc:name="Object to JSON" />
+                <logger level="INFO"
+                    message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/createIPR, method=post"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                
+                <http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST" doc:name="HTTP">
+                    <http:success-status-code-validator values="200..599"/>
+                </http:request>
+                <!-- <outbound-endpoint address="http://${ilp-host}:${ilp-service.port}/createIPR"
+                    exchange-pattern="request-response" doc:name="Generic"></outbound-endpoint> -->
+                <json:json-to-object-transformer
+                    doc:name="Convert ILP-Service Response to Map" returnClass="java.util.HashMap" />
+                <expression-transformer expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap]" doc:name="Update dfsp response with ipr"></expression-transformer>
+                <json:object-to-json-transformer doc:name="Object to JSON" />
+                <logger level="INFO"
+                    message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                
+            </when>
+            <when expression="#[payload.amountType == 'SEND']">
+                <logger level="INFO"
+                    message="Handle RECEIVE portion"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+            </when>
+            <otherwise>
+                <logger level="INFO"
+                    message="Handle Default portion"
+                    category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+            </otherwise>
+        </choice>
 
-		<!-- <set-payload value="#[payload]" doc:name="Set Payload"/> <set-property 
-			propertyName="http.status" value="#[message.inboundProperties.'http.status']" 
-			doc:name="Property" /> -->
-	</flow>
+        <!-- <set-payload value="#[payload]" doc:name="Set Payload"/> <set-property 
+            propertyName="http.status" value="#[message.inboundProperties.'http.status']" 
+            doc:name="Property" /> -->
+    </flow>
 
-	<flow name="post:/payments:application/json:scheme-adapter-config">
-		<set-property propertyName="Content-Type" value="application/json"
-			doc:name="Property" />
-		<set-payload value="#[NullPayload.getInstance()]"
-			doc:name="Set Payload" />
-	</flow>
+    <flow name="post:/payments:application/json:scheme-adapter-config">
+        <set-property propertyName="Content-Type" value="application/json"
+            doc:name="Property" />
+        <set-payload value="#[NullPayload.getInstance()]"
+            doc:name="Set Payload" />
+    </flow>
 
 </mule>
