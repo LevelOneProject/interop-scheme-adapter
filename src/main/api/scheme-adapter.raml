@@ -77,6 +77,13 @@ types:
       status:
         type: string
         required: true
+       
+  ILPAddress:
+    type: object
+    properties: 
+      ilpAddress:
+        type: string
+        required: true
 
 /quotes:
   displayName: /v1/quotes/
@@ -105,6 +112,20 @@ types:
             example: |
               { 
                 "status" : "ok" 
+              }
+
+/ilpAddress:
+  displayName: ILP Address
+  description: This resource indicates ILP payment request packet
+  get:
+    responses: 
+      200:
+        body: 
+          application/json: 
+            type: ILPAddress
+            example: |
+              { 
+                "ilpAddress" : "ok" 
               }
 
 /payments:
