@@ -65,7 +65,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 					</when>
 					<when expression="#[payload.transferType.initiator == 'PROXY']">
-						<flow-ref name="dfsp_quote-and-ilpservice_createIPR"/>
+						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="dfsp_quote-and-ilpservice_createIPR"/>
 					</when>
 					<otherwise>
 						<logger level="INFO" message="Initiator should either be PAYER/PROXY" category="com.l1p.interop.scheme.adapter.quote"
@@ -147,7 +147,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					</when>
 
 					<when expression="#[payload.transferType.initiator == 'PROXY']">
-						<flow-ref name="dfsp_quote-and-ilpservice_createIPR"/>
+						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="Flow Reference"/>
 					</when>
 				</choice>
 			</when>
@@ -183,6 +183,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	</flow>
 	
 	<sub-flow name="dfsp_quote-and-ilpservice_createIPR">
+	
 		<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
 			returnClass="java.util.HashMap" />
 		<set-session-variable variableName="paymentId" value="#[payload.paymentId]"
@@ -191,14 +192,18 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			doc:name="Save Input Receiver URL" />
 		<set-session-variable variableName="inputReceiveAmount" value="#[payload.amount.amount]"
 			doc:name="Save Input Amount" />
+		<expression-transformer doc:name="Update transferType before sending to dfsp" expression="#[payload.remove(&quot;transferType&quot;); payload.put(&quot;transferType&quot;,&quot;p2p&quot;); payload]"/>
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 		<logger level="INFO"
-			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post"
+			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<http:request config-ref="dfsp-quote-http-config" path="/v1/quotes" method="POST"
 			doc:name="Call ilp-service createIPR">
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
+		<logger level="INFO"
+			message="Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
+			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<json:json-to-object-transformer returnClass="java.util.Map"
 			doc:name="Convert JSON Payload to Map" />
 			
