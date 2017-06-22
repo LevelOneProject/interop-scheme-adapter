@@ -161,7 +161,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	</flow>
 
 	<flow name="post:/payments:application/json:scheme-adapter-config">
-		<echo-component doc:name="Echo" />
+		<logger level="INFO"
+			message="Posting ILP Service /payIPR request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/payIPR, method=POST Payload: #[payload]"
+			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
+		<http:request config-ref="ilp-service-http-config" path="/payIPR" method="POST"
+			doc:name="Call ilp-service payment">
+			<http:success-status-code-validator values="200..599" />
+		</http:request>
+		<logger level="INFO"
+			message="Respose from ilp-service /payIPR Payload: #[message.payloadAs(java.lang.String)]"
+			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
+		<object-to-string-transformer doc:name="Object to String" mimeType="application/json"/>
 	</flow>
 
 	<flow name="get:/ilpAddress:scheme-adapter-config">
