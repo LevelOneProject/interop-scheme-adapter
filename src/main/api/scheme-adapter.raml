@@ -84,6 +84,17 @@ types:
       ilpAddress:
         type: string
         required: true
+        
+  NotificationRequest:
+      type: object
+      properties:
+        ipr: string
+        paymentId: string
+        destinationAccount: string
+        status:
+          type:
+            enum: [prepared, executed]
+        fulfillment?: string
 
 /quotes:
   displayName: /v1/quotes/
@@ -143,4 +154,15 @@ types:
           description: "ok"
           body:
               application/json:
-               type: PaymentResponse           
+               type: PaymentResponse
+               
+/notifications:
+  displayName: Notifications
+  description: ILP Service calls this endpoint to validate the prepare before proceesding further on fulfillment
+  post:
+      body:
+        application/json:
+         type: NotificationRequest
+      responses:
+        200:
+          description: "Success"

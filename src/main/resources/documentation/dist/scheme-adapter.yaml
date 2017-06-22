@@ -33,8 +33,6 @@ paths:
           schema:
             $ref: '#/definitions/QuoteResponse'
 
-
-
   /payments:
     post:
       summary: Submit Payment
@@ -49,6 +47,18 @@ paths:
           schema:
             $ref: '#/definitions/PaymentResponse'
 
+  /notifications:
+    post:
+      summary: Submit Notification
+      parameters:
+        - name: Notification Request
+          in: body
+          schema:
+            $ref: '#/definitions/NotificationRequest'
+      responses:
+        200:
+          description: Success
+          
 
 definitions:
 
@@ -169,11 +179,32 @@ definitions:
         $ref: '#/definitions/InitiatorEnum'
     required:
       - scenario
+      
+  NotificationRequest:
+    title: Notification Request
+    type: object
+    properties:
+      ipr:
+        type: string
+      paymentId:
+        type: string
+      destinationAccount:
+        type: string
+      status:
+        $ref: '#/definitions/StatusEnum'
+      fulfillment:
+        type: string
+    required:
+      - ipr
+      - paymentId
+      - destinationAccount
+      - status
 
   StatusEnum:
     title: statusEnum
     type: string
     enum:
+    - prepared
     - executed
     - rejected
     - expired
