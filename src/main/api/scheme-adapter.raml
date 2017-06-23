@@ -95,6 +95,103 @@ types:
           type:
             enum: [prepared, executed]
         fulfillment?: string
+        
+  QueryResponse:
+    type: object
+    properties:
+      type:
+        enum: [ payee, invoice ]
+      account:
+        type: string
+        pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
+      currencyCode: string
+      currencySymbol: string
+      name?: string
+      imageUrl?:
+        type: string
+        pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
+      amount?:
+        type: string
+        pattern: ^[-+]?[0-9]*[.]?[0-9]+([eE][-+]?[0-9]+)?$
+      status?:
+        enum: [ paid, unpaid, cancelled ]
+      invoiceInfo?: string
+      
+  QueryErrorResponse:
+    type: object
+    properties:
+      id: string
+      message: string
+      
+  GetFetchResponse:
+    type: object
+    properties:
+      name?: string
+      account: string
+      currencySymbol: string
+      currencyCode: string
+      
+  GetPayeeResponse:
+    type: GetFetchResponse
+    properties:
+      type:
+        enum: [ payee, invoice ]
+      paymentsUrl: string
+      imageUrl?:
+        type: string
+        pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$ 
+  
+  FetchErrorResponse:
+    type: object
+    properties:
+      id: string
+      message: string
+
+/query:
+    displayName: Query ( GET <receiver> )
+    get:
+        description: The sender queries the receiver endpoint to get information about the type of payment that can be made to this receiver
+        queryParameters:
+          receiver: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: QueryResponse
+          404:
+            body:
+              application/json:
+                type: QueryErrorResponse
+                example:
+                    id: "InvalidReceiverIdError"
+                    message: "Invalid receiver ID"
+                    
+                    
+/receivers:
+  displayName: Fetching Account Info ( GET <receiver> ). There are 2 types of receivers - payee and invoice.
+  /{ID}:
+    get:
+      description: Payee
+      responses:
+        200:
+          body:
+            application/json:
+              type: GetPayeeResponse
+              example:
+                  type: "payee"
+                  name: "Bob Dylan"
+                  account: "https://ilpdemo.red.bob:8014"
+                  currencyCode: "USD"
+                  currencySymbol: "$"
+                  imageUrl: "https://red.ilpdemo.org/api/receivers/bob/profile_pic.jpg"
+                  paymentsUrl: "http://backend.example/receivers/bob/:id"
+        404:
+          body:
+            application/json:
+              type: FetchErrorResponse
+              example:
+                  id: "InvalidReceiverIdError"
+                  message: "Invalid receiver ID"
 
 /quotes:
   displayName: /v1/quotes/
@@ -166,3 +263,5 @@ types:
       responses:
         200:
           description: "Success"
+          
+
