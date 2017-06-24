@@ -1,0 +1,9 @@
+{
+  "id": "http://ec2-35-166-180-190.us-west-2.compute.amazonaws.com:8010/ledger/accounts/alice",
+  "name": "alice",
+  "balance": "1000.00",
+  "currencyCode": "USD",
+  "currencySymbol": "$",
+  "is_disabled": false,
+  "ledger": "http://ec2-35-166-180-190.us-west-2.compute.amazonaws.com:8010/ledger"
+}

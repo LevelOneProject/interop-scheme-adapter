@@ -15,4 +15,30 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<!-- Apikit HTTP configuration, which is normally referenced from domain -->
 	<http:listener-config name="api-httpListenerConfig" host="${proxy-service.host}" port="${proxy-service.port}" doc:name="HTTP Listener Configuration"/>
 	
+	<spring:beans>
+      <spring:bean id="actualLedgerToLedgerAdapterUrlTransformer"
+                 class="com.l1p.interop.ActualLedgerToLedgerAdapterUrlTransformer">
+      <spring:property name="ledgerUrlMapper" ref="ledgerUrlMapper"/>
+      <spring:property name="urlFields">
+        <spring:list>
+          <spring:value>id</spring:value>
+          <spring:value>ledger</spring:value>
+          <spring:value>debits.account</spring:value>
+          <spring:value>credits.account</spring:value>
+          <spring:value>sourceAccount</spring:value>
+          <spring:value>account</spring:value>
+        </spring:list>
+      </spring:property>
+    </spring:bean>
+
+    <spring:bean id="ledgerUrlMapper" class="com.l1p.interop.ilp.ledger.LedgerUrlMapper">
+      <!-- Going from dfsp/actual ledger to adapter -->
+      <spring:constructor-arg value="${ilp-ledger.url.replacement.regex}"/>
+      <spring:constructor-arg value="${ilp-ledger-adapter.ledgerAdapterURL}"/>
+      <!-- Going from adapter to dfsp/actual ledger -->
+      <spring:constructor-arg value="${ilp-ledger-adapter.url.replacement.regex}"/>
+      <spring:constructor-arg value="${ilp-ledger.ledgerURL}"/>
+    </spring:bean>
+
+  </spring:beans>
 </mule>
