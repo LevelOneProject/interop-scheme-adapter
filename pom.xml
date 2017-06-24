@@ -21,7 +21,7 @@
 	</scm>
 
 	<properties>
-		<interop-domain.version>0.1.31</interop-domain.version>
+		<interop-domain.version>0.1.32</interop-domain.version>
 	</properties>
 
 	<dependencies>
