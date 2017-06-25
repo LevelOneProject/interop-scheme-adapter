@@ -25,7 +25,6 @@ deployment:
       
       #Merge back to develop so the latest version is shared
       - git remote set-url origin https://$GITHUB_TOKEN@github.com/LevelOneProject/interop-scheme-adapter.git
-      - git branch -d develop
       - git checkout -b develop origin/develop
       - git pull origin develop
       - git merge master
