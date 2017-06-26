@@ -53,14 +53,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
 		<logger level="INFO"
-			message="Processing request for GET on http://${dfsp-host}:${dfsp-receiver-service.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee]"
+			message="Processing request for GET on http://${dfsp-host}:${dfsp-api.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee]"
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
 			doc:name="PropertyHttpL1p-Trace-Id" />
 		<http:request config-ref="dfsp-api-http-config" path="/receivers/#[sessionVars.payee]"
 			method="GET" doc:name="HTTP">
 			<http:request-builder>
-				<http:header headerName="Authorization" value="#['Basic ']${dfsp-receiver-service.auth_value}" />
+				<http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
 			</http:request-builder>
 			<http:success-status-code-validator values="200,400" />
 		</http:request>
@@ -262,7 +262,10 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-api.port}/quotes, method=post Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<http:request config-ref="dfsp-api-http-config" path="/quotes" method="POST"
-			doc:name="Call ilp-service createIPR">
+			doc:name="Call dfsp /quote">
+            <http:request-builder>
+                <http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
+            </http:request-builder>
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
 		<logger level="INFO" message="Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
