@@ -257,6 +257,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
 	</flow>
+	
 	<sub-flow name="dfsp_quote-and-ilpservice_createIPR">
 		<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
 			returnClass="java.util.HashMap" />
@@ -267,7 +268,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<set-session-variable variableName="inputReceiveAmount" value="#[payload.amount.amount]"
 			doc:name="Save Input Amount" />
 		<expression-transformer doc:name="Update transferType before sending to dfsp"
-			expression="#[payload.remove(&quot;transferType&quot;); payload.put(&quot;transferType&quot;,&quot;p2p&quot;); payload.remove(&quot;transferType&quot;); payload.put(&quot;transferType&quot;,&quot;p2p&quot;); payload]" />
+			expression="#[payload.remove(&quot;paymentId&quot;); payload.put(&quot;transferId&quot;,sessionVars.paymentId); payload.remove(&quot;transferType&quot;); payload.put(&quot;transferType&quot;,&quot;p2p&quot;); payload.get(&quot;payee&quot;).remove(&quot;url&quot;) ;payload]" />
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 		<logger level="INFO"
 			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-api.port}/quotes, method=post Payload: #[payload]"
@@ -279,9 +280,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			</http:request-builder>
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
-		<choice doc:name="Update Account URL if valid">
+		<choice doc:name="Check if dfsp /quote call is success/failure">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
-				<logger level="INFO" message="Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
+				<logger level="INFO" message="Success Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer returnClass="java.util.Map"
 					doc:name="Convert JSON Payload to Map" />
@@ -319,7 +320,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<json:object-to-json-transformer doc:name="Object to JSON" />
 			</when>
 			<otherwise>
-				<logger level="INFO" message="Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
+				<logger level="INFO" message="Failure Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 			</otherwise>
 		</choice>
