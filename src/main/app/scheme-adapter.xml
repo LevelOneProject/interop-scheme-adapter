@@ -12,12 +12,11 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
 	<http:request-config name="ilp-service-http-config" host="${ilp-host}" port="${ilp-service.port}"
 		doc:name="ILP-Service HTTP Request Configuration" responseTimeout="30000" />
-	<http:request-config name="dfsp-quote-http-config" host="${dfsp-host}"
-		port="${dfsp-quote-service.port}" doc:name="DFSP Quote Service Config" responseTimeout="30000" />
-	<http:request-config name="dfsp-receiver-http-config" host="${dfsp-host}"
-		port="${dfsp-receiver-service.port}" doc:name="DFSP Receiver Service Config" responseTimeout="30000" />
+	<http:request-config name="dfsp-api-http-config" host="${dfsp-host}"
+		port="${dfsp-api.port}" doc:name="DFSP API Config" responseTimeout="30000" />
 
 	<!-- <spring:beans> <spring:bean id="sideCarClient" class="com.l1p.interop.scheme.adapter.SideCarClient"> 
 		<spring:constructor-arg value="${sidecar-server.host}" /> <spring:constructor-arg value="${sidecar-server.port}" 
@@ -58,7 +57,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
 			doc:name="PropertyHttpL1p-Trace-Id" />
-		<http:request config-ref="dfsp-receiver-http-config" path="/receivers/#[sessionVars.payee]"
+		<http:request config-ref="dfsp-api-http-config" path="/receivers/#[sessionVars.payee]"
 			method="GET" doc:name="HTTP">
 			<http:request-builder>
 				<http:header headerName="Authorization" value="#['Basic ']${dfsp-receiver-service.auth_value}" />
@@ -260,9 +259,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			expression="#[payload.remove(&quot;transferType&quot;); payload.put(&quot;transferType&quot;,&quot;p2p&quot;); payload]" />
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 		<logger level="INFO"
-			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-quote-service.port}${dfsp-quote-service.basePath}/quote, method=post Payload: #[payload]"
+			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-api.port}/quotes, method=post Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-		<http:request config-ref="dfsp-quote-http-config" path="/v1/quotes" method="POST"
+		<http:request config-ref="dfsp-api-http-config" path="/quotes" method="POST"
 			doc:name="Call ilp-service createIPR">
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
