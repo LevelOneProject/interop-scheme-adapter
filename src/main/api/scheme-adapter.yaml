@@ -156,7 +156,7 @@ definitions:
       fees:
         $ref: "#/definitions/Amount"
       transferType:
-        $ref: "#/definitions/TransferType"
+        type: string
   QuoteResponse:
     type: "object"
     required:
@@ -242,19 +242,7 @@ definitions:
         type: "number"
       currency:
         type: "string"
-  TransferType:
-    type: "object"
-    required:
-    - "scenario"
-    properties:
-      scenario:
-        type: "string"
-      initiator:
-        type: "string"
-        enum:
-        - "PAYER"
-        - "PAYEE"
-        - "PROXY"
+ 
   HealthStatus:
     type: "object"
     required:

@@ -16,7 +16,7 @@ types:
           enum: [SEND, RECEIVE]
       amount: Amount
       fees?: Amount
-      transferType: TransferType
+      transferType: string
 
   QuoteResponse:
     type: object
@@ -63,13 +63,6 @@ types:
       amount: number
       currency: string
   
-  TransferType:
-    type: object
-    properties:
-      scenario: string
-      initiator?:
-        type:
-          enum: [PAYER, PAYEE, PROXY]
   
   HealthStatus:
     type: object

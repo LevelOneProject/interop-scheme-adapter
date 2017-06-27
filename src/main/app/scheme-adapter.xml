@@ -89,50 +89,66 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<choice doc:name="Check for amountType SEND/RECEIVE">
 			<when expression="#[payload.amountType == 'RECEIVE']">
 				<choice doc:name="Check for initiator PAYER/PROXY">
-					<when expression="#[payload.transferType.initiator == 'PAYER']">
+					<when expression="#[message.inboundProperties.'initiator'== null]">
 						<set-session-variable variableName="payeeUrl" value="#[payload.payee.url]"
 							doc:name="Save Input Receiver URL" />
-						<expression-transformer doc:name="Update initiator to PROXY"
-							expression="#[payload.transferType.initiator='PROXY'; payload]" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
+						<set-property propertyName="initiator" value="PROXY"></set-property>
+						<logger level="INFO"
+							message="Posting request to scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
+							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 						<outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"
-							exchange-pattern="request-response" doc:name="Generic" />
-						<choice doc:name="call ilp-service if /quote is successful">
+							exchange-pattern="request-response" doc:name="Call scheme-adapter /quotes" />
+						<choice doc:name="check if scheme-adapter /quotes is successful">
 							<when expression="#[message.inboundProperties.'http.status' == 200]">
 								<logger level="INFO"
-									message="Scheme adapter success quote response: #[message.payloadAs(java.lang.String)]"
+									message="scheme-adapter success /quotes response: #[message.payloadAs(java.lang.String)]"
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 								<json:json-to-object-transformer returnClass="java.util.Map"
 									doc:name="Convert JSON Payload to Map" />
 								<set-session-variable variableName="finalResponseMap" value="#[payload]"
 									doc:name="Save Final Response as a map" />
 								<!-- Section for calling quoteIPR -->
+								<logger level="INFO"
+									message="Posting request to ilp-service /quoteIPR to http://${ilp-host}:${ilp-service.port}/quoteIPR?ipr=#[payload.ipr], method=GET"
+									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 								<http:request config-ref="ilp-service-http-config" path="/quoteIPR" method="GET"
-									doc:name="Call ilp-service quoteIPR">
+									doc:name="Call ilp-service /quoteIPR">
 									<http:request-builder>
 										<http:query-param paramName="ipr" value="#[payload.ipr]" />
 									</http:request-builder>
 									<http:success-status-code-validator values="200..599" />
 								</http:request>
-								<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
-									returnClass="java.util.HashMap" />
-								<expression-transformer
-									expression="#[sessionVars.finalResponseMap.get(&quot;receiveAmount&quot;).put(&quot;amount&quot;,payload.sourceAmount); sessionVars.finalResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.finalResponseMap]"
-									doc:name="Update dfsp response with quoteIPR response" />
-								<json:object-to-json-transformer doc:name="Object to JSON" />
-								<logger level="INFO"
-									message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
-									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+								<choice doc:name="check if ilp-service /quoteIPR is successful">
+									<when expression="#[message.inboundProperties.'http.status' == 200]">
+										<logger level="INFO"
+											message="Success response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+										<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
+											returnClass="java.util.HashMap" />
+										<expression-transformer
+											expression="#[sessionVars.finalResponseMap.get(&quot;receiveAmount&quot;).put(&quot;amount&quot;,payload.sourceAmount); sessionVars.finalResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.finalResponseMap]"
+											doc:name="Update dfsp response with quoteIPR response" />
+										<json:object-to-json-transformer doc:name="Object to JSON" />
+										<logger level="INFO"
+											message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+									</when>
+									<otherwise>
+										<logger level="INFO"
+											message="Failure response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+									</otherwise>
+								</choice>
 							</when>
 							<otherwise>
 								<logger level="INFO"
-									message="Scheme adapter failure quote response: #[message.payloadAs(java.lang.String)]"
+									message="Failure response from Scheme adapter /quotes: #[message.payloadAs(java.lang.String)]"
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 							</otherwise>
 						</choice>
-
 					</when>
-					<when expression="#[payload.transferType.initiator == 'PROXY']">
+					<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
 						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="dfsp_quote-and-ilpservice_createIPR" />
 					</when>
 					<otherwise>
@@ -143,7 +159,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			</when>
 			<when expression="#[payload.amountType == 'SEND']">
 				<choice doc:name="Check for initiator PAYER/PROXY">
-					<when expression="#[payload.transferType.initiator == 'PAYER']">
+					<when expression="#[message.inboundProperties.'initiator'== null]">
 						<json:json-to-object-transformer doc:name="Convert payload to Map"
 							returnClass="java.util.HashMap" />
 						<set-session-variable variableName="originalQuoteRequestMap" value="#[payload]"
@@ -154,62 +170,79 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<set-session-variable variableName="payeeLedgerAccount" value="#[payload.payee.account]"
 							doc:name="Save Payee ledger account" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
+						<logger level="INFO"
+									message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
+									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 						<http:outbound-endpoint
 							address="http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount]"
 							method="GET" exchange-pattern="request-response" doc:name="Generic" />
-						<logger level="INFO"
-							message="Scheme adapter ilpAddress response: #[message.payloadAs(java.lang.String)]"
-							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
-							returnClass="java.util.HashMap" />
-						<set-session-variable variableName="ilpAddress" value="#[payload.address]"
-							doc:name="Save ilpAddress" />
-						<!-- Call /quoteSourceAmount on ILP Service -->
-						<!-- <set-session-variable variableName="quoteSourceAmountRequestMap" value="#[new java.util.HashMap()]" 
-							doc:name="Save Original Request as a map" /> <expression-transformer expression="#[sessionVars.quoteSourceAmountRequestMap.put(&quot;destinationAddress&quot;,sessionVars.ilpAddress); 
-							sessionVars.quoteSourceAmountRequestMap.put(&quot;sourceAmount&quot;,sessionVars.originalQuoteRequestMap.amount.amount); 
-							sessionVars.quoteSourceAmountRequestMap.put(&quot;connectorAccount&quot;,sessionVars.payeeLedgerAccount); 
-							sessionVars.quoteSourceAmountRequestMap.put(&quot;destinationScale&quot;,'1'); sessionVars.quoteSourceAmountRequestMap]" 
-							doc:name="Populate ilp-service quoteSourceAmount request" /> <json:object-to-json-transformer doc:name="Object 
-							to JSON" /> -->
-						<logger level="INFO"
-							message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/quoteSourceAmount, method=GET with query parameters: destinationAddress:#[sessionVars.ilpAddress] sourceAmount:#[sessionVars.originalQuoteRequestMap.amount.amount] connectorAccount:#[sessionVars.payeeLedgerAccount] destinationScale:1"
-							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<http:request config-ref="ilp-service-http-config" path="/quoteSourceAmount"
-							method="GET" doc:name="Call ilp-service /quoteSourceAmount">
-							<http:request-builder>
-								<http:query-param paramName="destinationAddress" value="#[sessionVars.ilpAddress]" />
-								<http:query-param paramName="sourceAmount"
-									value="#[sessionVars.originalQuoteRequestMap.amount.amount]" />
-								<http:query-param paramName="connectorAccount" value="#[sessionVars.payeeLedgerAccount]" />
-								<http:query-param paramName="destinationScale" value="1" />
-							</http:request-builder>
-							<http:success-status-code-validator values="200..599" />
-						</http:request>
-						<logger level="INFO"
-							message="ILP-Service /quoteSourceAmount response: #[message.payloadAs(java.lang.String)]"
-							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<json:json-to-object-transformer doc:name="Convert ILP-Service /quoteSourceAmount Response to Map"
-							returnClass="java.util.HashMap" />
-						<set-session-variable variableName="destinationAmount" value="#[payload.destinationAmount]"
-							doc:name="Save destination amount" />
-						<set-session-variable variableName="sourceExpiryDuration" value="#[payload.sourceExpiryDuration]"
-							doc:name="Save sourceExpiryDuration" />
-						<!-- Call /quotes on scheme adapter on Payee side -->
-						<expression-transformer
-							expression="#[sessionVars.originalQuoteRequestMap.get(&quot;amount&quot;).put(&quot;amount&quot;,sessionVars.destinationAmount); sessionVars.originalQuoteRequestMap.get(&quot;transferType&quot;).put(&quot;initiator&quot;,&quot;PROXY&quot;); sessionVars.originalQuoteRequestMap]"
-							doc:name="Update dfsp request with destination amount from ilp-service /quoteSourceAmount" />
-						<json:object-to-json-transformer doc:name="Object to JSON" />
-						<logger level="INFO"
-							message="Posting dfsp /quotes request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
-							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<http:outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"
-							method="POST" exchange-pattern="request-response" doc:name="Generic" />
-						<logger level="INFO" message="Scheme adapter quote response: #[message.payloadAs(java.lang.String)]"
-							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<json:object-to-json-transformer doc:name="Object to JSON" />
+						<choice doc:name="Check if ilp-service if /ilpAddress is successful">
+							<when expression="#[message.inboundProperties.'http.status' == 200]">
+								<logger level="INFO"
+									message="Success response from Scheme adapter /ilpAddress: #[message.payloadAs(java.lang.String)]"
+									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+								<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
+									returnClass="java.util.HashMap" />
+								<set-session-variable variableName="ilpAddress" value="#[payload.address]"
+									doc:name="Save ilpAddress" />
+								<!-- Call /quoteSourceAmount on ILP Service -->
+								<logger level="INFO"
+									message="Posting request to ilp-service to http://${ilp-host}:${ilp-service.port}/quoteSourceAmount, method=GET with query parameters: destinationAddress:#[sessionVars.ilpAddress] sourceAmount:#[sessionVars.originalQuoteRequestMap.amount.amount] connectorAccount:#[sessionVars.payeeLedgerAccount] destinationScale:1"
+									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+								<http:request config-ref="ilp-service-http-config" path="/quoteSourceAmount"
+									method="GET" doc:name="Call ilp-service /quoteSourceAmount">
+									<http:request-builder>
+										<http:query-param paramName="destinationAddress" value="#[sessionVars.ilpAddress]" />
+										<http:query-param paramName="sourceAmount"
+											value="#[sessionVars.originalQuoteRequestMap.amount.amount]" />
+										<http:query-param paramName="connectorAccount" value="#[sessionVars.payeeLedgerAccount]" />
+										<http:query-param paramName="destinationScale" value="1" />
+									</http:request-builder>
+									<http:success-status-code-validator values="200..599" />
+								</http:request>
+								<choice doc:name="Check if ilp-service if /quoteSourceAmount is successful">
+									<when expression="#[message.inboundProperties.'http.status' == 200]">
+										<logger level="INFO"
+											message="Success response from ilp-service /quoteSourceAmount: #[message.payloadAs(java.lang.String)]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+										<json:json-to-object-transformer doc:name="Convert ILP-Service /quoteSourceAmount Response to Map"
+											returnClass="java.util.HashMap" />
+										<set-session-variable variableName="destinationAmount" value="#[payload.destinationAmount]"
+											doc:name="Save destination amount" />
+										<set-session-variable variableName="sourceExpiryDuration" value="#[payload.sourceExpiryDuration]"
+											doc:name="Save sourceExpiryDuration" />
+										<!-- Call /quotes on scheme adapter on Payee side -->
+										<expression-transformer
+											expression="#[sessionVars.originalQuoteRequestMap.get(&quot;amount&quot;).put(&quot;amount&quot;,sessionVars.destinationAmount);  sessionVars.originalQuoteRequestMap]"
+											doc:name="Update dfsp request with destination amount from ilp-service /quoteSourceAmount" />
+										<json:object-to-json-transformer doc:name="Object to JSON" />
+										<set-property propertyName="initiator" value="PROXY"></set-property>
+										<logger level="INFO"
+											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+										<http:outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"
+											method="POST" exchange-pattern="request-response" doc:name="Generic" />
+										<logger level="INFO"
+											message="Response from scheme-adapter /quotes: #[message.payloadAs(java.lang.String)]" category="com.l1p.interop.scheme.adapter.quote"
+											doc:name="logger" />
+										<json:object-to-json-transformer doc:name="Object to JSON" />
+									</when>
+									<otherwise>
+										<logger level="INFO"
+											message="Failure response from ilp-service /quoteSourceAmount: #[message.payloadAs(java.lang.String)]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+									</otherwise>
+								</choice>
+							</when>
+							<otherwise>
+								<logger level="INFO"
+									message="Failure Response from scheme-adapter /ilpAddress: #[message.payloadAs(java.lang.String)]"
+									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+							</otherwise>
+						</choice>
+
 					</when>
-					<when expression="#[payload.transferType.initiator == 'PROXY']">
+					<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
 						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="Flow Reference" />
 					</when>
 				</choice>
@@ -257,7 +290,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
 	</flow>
-	
+
 	<sub-flow name="dfsp_quote-and-ilpservice_createIPR">
 		<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
 			returnClass="java.util.HashMap" />
@@ -274,15 +307,16 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			message="Posting request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${dfsp-host}:${dfsp-api.port}/quotes, method=post Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<http:request config-ref="dfsp-api-http-config" path="/quotes" method="POST"
-			doc:name="Call dfsp /quote">
+			doc:name="Call dfsp-api /quote">
 			<http:request-builder>
 				<http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
 			</http:request-builder>
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
-		<choice doc:name="Check if dfsp /quote call is success/failure">
+		<choice doc:name="Check if dfsp-api /quote call is success/failure">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
-				<logger level="INFO" message="Success Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
+				<logger level="INFO"
+					message="Success Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer returnClass="java.util.Map"
 					doc:name="Convert JSON Payload to Map" />
@@ -309,9 +343,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/createIPR, method=post Payload: #[payload]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST"
-					doc:name="Call ilp-service createIPR">
+					doc:name="Call ilp-service /createIPR">
 					<http:success-status-code-validator values="200..599" />
 				</http:request>
+				<logger level="INFO"
+					message="Response from ilp-service /createIPR: #[message.payloadAs(java.lang.String)]"
+					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
 					returnClass="java.util.HashMap" />
 				<expression-transformer
@@ -320,7 +357,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<json:object-to-json-transformer doc:name="Object to JSON" />
 			</when>
 			<otherwise>
-				<logger level="INFO" message="Failure Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
+				<logger level="INFO"
+					message="Failure Response from payee dfsp quote: #[message.payloadAs(java.lang.String)]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 			</otherwise>
 		</choice>
