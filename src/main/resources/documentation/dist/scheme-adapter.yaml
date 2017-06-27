@@ -1,357 +1,240 @@
----
-swagger: "2.0"
+swagger: '2.0'
 info:
-  version: "v1"
-  title: "Interop Scheme Adapter"
-host: "localhost:8088"
-basePath: "/scheme/adapter/v1"
+  title: interop-scheme-adapter
+  description: Scheme Adapter
+  version: V1
+
+#host: ec2-52-37-54-209.us-west-2.compute.amazonaws.com:8088
 schemes:
-- "https"
+  - http
+  - https
+
+basePath: /scheme/adapter/v1
+
+
 paths:
   /quotes:
     post:
-      description: "Submit a request for a quote."
+      description: Request for a quote
       consumes:
-      - "application/json"
-      produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "body"
-        in: "body"
-        required: true
-        schema:
-          $ref: "#/definitions/QuoteRequest"
-      responses:
-        201:
-          description: "Status 201"
+        - name: Quote Request
+          in: body
+          description: request object
           schema:
-            $ref: "#/definitions/QuoteResponse"
-  /health:
-    get:
-      produces:
-      - "application/json"
-      parameters: []
+            $ref: '#/definitions/QuoteRequest'
       responses:
         200:
-          description: "Status 200"
+          description: quote response
           schema:
-            $ref: "#/definitions/HealthStatus"
-          examples:
-            application/json: "{ \n  \"status\" : \"ok\" \n}\n"
-  /ilpAddress:
-    get:
-      produces:
-      - "application/json"
-      parameters:
-      - name: "account"
-        in: "query"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "Status 200"
-          schema:
-            $ref: "#/definitions/ILPAddress"
-          examples:
-            application/json: "{ \n  \"ilpAddress\" : \"ok\" \n}\n"
+            $ref: '#/definitions/QuoteResponse'
+
   /payments:
     post:
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
+      summary: Submit Payment
       parameters:
-      - name: "body"
-        in: "body"
-        required: true
-        schema:
-          $ref: "#/definitions/PaymentRequest"
-      responses:
-        201:
-          description: "ok"
+        - name: Payment Request
+          in: body
           schema:
-            $ref: "#/definitions/PaymentResponse"
+            $ref: '#/definitions/PaymentRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/PaymentResponse'
+
   /notifications:
     post:
-      consumes:
-      - "application/json"
+      summary: Submit Notification
       parameters:
-      - name: "body"
-        in: "body"
-        required: true
-        schema:
-          $ref: "#/definitions/NotificationRequest"
+        - name: Notification Request
+          in: body
+          schema:
+            $ref: '#/definitions/NotificationRequest'
       responses:
         200:
-          description: "Success"
-  /query:
+          description: Success
+  
+  /ilpAddress:
     get:
-      description: "The sender queries the receiver endpoint to get information about\
-        \ the type of payment that can be made to this receiver"
-      produces:
-      - "application/json"
+      summary: Gets the ilpAddress 
+      description: 
       parameters:
-      - name: "receiver"
-        in: "query"
-        required: true
-        type: "string"
+        - name: account
+          in: query
+          description: ledger url for the account
+          type: string
       responses:
         200:
-          description: "Status 200"
-          schema:
-            $ref: "#/definitions/QueryResponse"
-        404:
-          description: "Status 404"
-          schema:
-            $ref: "#/definitions/QueryErrorResponse"
+          description: ilp address
+          type: object
+          properties:
+            ilpAddress:
+              type: string
+    
+  /health:
+    get:
+      summary: Gets the health status of the api
+      description: 
+      responses:
+        200:
+          description: OK
           examples:
-            application/json:
-              id: "InvalidReceiverIdError"
-              message: "Invalid receiver ID"
-  /receivers/{ID}:
-    get:
-      summary: "Get payee/invoice details"
-      operationId: "payee ID or invoice ID"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "Success"
-          schema:
-            $ref: "#/definitions/GetPayeeResponse"
-        404:
-          description: "Payee/Invoice Not found"
-          schema:
-            $ref: "#/definitions/FetchErrorResponse"
-    parameters:
-    - name: "ID"
-      in: "path"
-      required: true
-      type: "string"
+            {"status":"ok"}
+            
+    
+
 definitions:
+
   QuoteRequest:
-    type: "object"
-    required:
-    - "amount"
-    - "amountType"
-    - "payee"
-    - "payer"
-    - "paymentId"
-    - "transferType"
+    title: Quote Request
+    type: object
     properties:
       paymentId:
-        type: "string"
+        type: string
       payer:
-        $ref: "#/definitions/Person"
+        $ref: '#/definitions/Person'
       payee:
-        $ref: "#/definitions/Person"
+        $ref: '#/definitions/Person'
       amountType:
-        type: "string"
-        enum:
-        - "SEND"
-        - "RECEIVE"
+        $ref: '#/definitions/AmountTypeEnum'
       amount:
-        $ref: "#/definitions/Amount"
+        $ref: '#/definitions/Amount'
       fees:
-        $ref: "#/definitions/Amount"
+        $ref: '#/definitions/Amount'
       transferType:
         type: string
+    required:
+      - paymentId
+      - payer
+      - payee
+      - amountType
+      - amount
+      - transferType
+
+
   QuoteResponse:
-    type: "object"
-    required:
-    - "payeeCommission"
-    - "payeeFee"
-    - "paymentId"
-    - "receiveAmount"
+    title: Quote Response
+    type: object
     properties:
       paymentId:
-        type: "string"
+        type: string
       receiveAmount:
-        $ref: "#/definitions/Amount"
+        $ref: '#/definitions/Amount'
       payeeFee:
-        $ref: "#/definitions/Amount"
+        $ref: '#/definitions/Amount'
       payeeCommission:
-        $ref: "#/definitions/Amount"
+        $ref: '#/definitions/Amount'
       ipr:
-        type: "string"
-  PaymentRequest:
-    type: "object"
+        type: string
+      sourceExpiryDuration:
+        type: number
+        format: integer
     required:
-    - "connectorAccount"
-    - "ipr"
-    - "sourceAccount"
-    - "sourceAmount"
-    - "sourceExpiryDuration"
+      - paymentId
+      - receiveAmount
+      - payeeFee
+      - payeeCommission
+
+  PaymentRequest:
+    title: Payment Request
+    type: object
     properties:
       ipr:
-        type: "string"
+        type: string
       sourceAmount:
-        type: "number"
-        format: "float"
+        type: number
+        format: decimal
       sourceAccount:
-        type: "string"
+        type: string
       connectorAccount:
-        type: "string"
+        type: string
       sourceExpiryDuration:
-        type: "integer"
+        type: number
+        format: integer
+
   PaymentResponse:
-    type: "object"
-    required:
-    - "connectorAccount"
-    - "fulfillment"
-    - "paymentId"
-    - "rejectionMessage"
-    - "status"
+    title: Payment Response
+    type: object
     properties:
       paymentId:
-        type: "string"
+        type: string
       connectorAccount:
-        type: "string"
+        type: string
       status:
-        type: "string"
-        enum:
-        - "executed"
-        - "rejected"
-        - "expired"
+        $ref: '#/definitions/StatusEnum'
       rejectionMessage:
-        type: "string"
+        type: string
       fulfillment:
-        type: "string"
+        type: string
+
+  Amount:
+    title: Amount
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+      currency:
+        type: string
+
   Person:
-    type: "object"
-    required:
-    - "identifier"
-    - "identifierType"
+    title: Person Object
+    type: object
     properties:
       identifier:
-        type: "string"
+        type: string
       identifierType:
-        type: "string"
+        type: string
       url:
-        type: "string"
+        type: string
       account:
-        type: "string"
-  Amount:
-    type: "object"
+        type: string
     required:
-    - "amount"
-    - "currency"
-    properties:
-      amount:
-        type: "number"
-      currency:
-        type: "string"
- 
+      - identifier
+      - identifierType
+  
   HealthStatus:
-    type: "object"
-    required:
-    - "status"
+    type: object
     properties:
       status:
-        type: "string"
-  ILPAddress:
-    type: "object"
-    required:
-    - "ilpAddress"
-    properties:
-      ilpAddress:
-        type: "string"
+        type: string
+      
   NotificationRequest:
-    type: "object"
-    required:
-    - "destinationAccount"
-    - "ipr"
-    - "paymentId"
-    - "status"
+    title: Notification Request
+    type: object
     properties:
       ipr:
-        type: "string"
+        type: string
       paymentId:
-        type: "string"
+        type: string
       destinationAccount:
-        type: "string"
+        type: string
       status:
-        type: "string"
-        enum:
-        - "prepared"
-        - "executed"
+        $ref: '#/definitions/StatusEnum'
       fulfillment:
-        type: "string"
-  QueryResponse:
-    type: "object"
+        type: string
     required:
-    - "account"
-    - "currencyCode"
-    - "currencySymbol"
-    - "type"
-    properties:
-      type:
-        type: "string"
-        enum:
-        - "payee"
-        - "invoice"
-      account:
-        type: "string"
-        pattern: "^((http(s?))\\:\\/\\/)?((([a-zA-Z0-9_\\-]{2,}\\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\\\
-          d|[01]\\d\\d|\\d?\\d)( ?(\\.?\\d)\\.)){4}))(:[a-zA-Z0-9]+)?(\\/[a-zA-Z0-9\\\
-          -\\._\\?\\,\\'\\/\\\\\\+&amp;%\\$#\\=~]*)?$"
-      currencyCode:
-        type: "string"
-      currencySymbol:
-        type: "string"
-      name:
-        type: "string"
-      imageUrl:
-        type: "string"
-        pattern: "^((http(s?))\\:\\/\\/)?((([a-zA-Z0-9_\\-]{2,}\\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\\\
-          d|[01]\\d\\d|\\d?\\d)( ?(\\.?\\d)\\.)){4}))(:[a-zA-Z0-9]+)?(\\/[a-zA-Z0-9\\\
-          -\\._\\?\\,\\'\\/\\\\\\+&amp;%\\$#\\=~]*)?$"
-      amount:
-        type: "string"
-        pattern: "^[-+]?[0-9]*[.]?[0-9]+([eE][-+]?[0-9]+)?$"
-      status:
-        type: "string"
-        enum:
-        - "paid"
-        - "unpaid"
-        - "cancelled"
-      invoiceInfo:
-        type: "string"
-  QueryErrorResponse:
-    type: "object"
-    required:
-    - "id"
-    - "message"
-    properties:
-      id:
-        type: "string"
-      message:
-        type: "string"
-  GetFetchResponse:
-    type: "object"
-    required:
-    - "account"
-    - "currencyCode"
-    - "currencySymbol"
-    properties:
-      name:
-        type: "string"
-      account:
-        type: "string"
-      currencySymbol:
-        type: "string"
-      currencyCode:
-        type: "string"
-  GetPayeeResponse:
-    $ref: "#/definitions/GetFetchResponse"
-  FetchErrorResponse:
-    type: "object"
-    required:
-    - "id"
-    - "message"
-    properties:
-      id:
-        type: "string"
-      message:
-        type: "string"
+      - ipr
+      - paymentId
+      - destinationAccount
+      - status
+
+  StatusEnum:
+    title: statusEnum
+    type: string
+    enum:
+    - prepared
+    - executed
+    - rejected
+    - expired
+
+  AmountTypeEnum:
+    title: Amount Type Enum
+    type: string
+    enum:
+    - SEND
+    - RECEIVE
+
+  
