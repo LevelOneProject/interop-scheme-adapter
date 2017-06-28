@@ -8,6 +8,19 @@ basePath: "/scheme/adapter/v1"
 schemes:
 - "https"
 paths:
+  /health:
+    get:
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "Status 200"
+          schema:
+            $ref: "#/definitions/HealthStatus"
+          examples:
+            application/json: "{ \n  \"status\" : \"ok\" \n}\n"
+  
   /quotes:
     post:
       description: "Submit a request for a quote."
@@ -26,18 +39,7 @@ paths:
           description: "Status 201"
           schema:
             $ref: "#/definitions/QuoteResponse"
-  /health:
-    get:
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "Status 200"
-          schema:
-            $ref: "#/definitions/HealthStatus"
-          examples:
-            application/json: "{ \n  \"status\" : \"ok\" \n}\n"
+  
   /ilpAddress:
     get:
       produces:
