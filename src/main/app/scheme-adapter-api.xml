@@ -32,10 +32,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router"/>
     <flow name="scheme-adapter-main">
         <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/*" doc:name="HTTP"/>
-        <set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'http.TraceID' == empty) ? java.util.UUID.randomUUID() : message.inboundProperties.'http.query.TraceID']" doc:name="set-TraceID"/>
+	<!-- Setting session variable L1p-Trace-Id to either L1p-Trace-Id header coming in if it exists or a generated UUID -->
+        <set-session-variable variableName="L1p-Trace-Id" value="#[ ( message.inboundProperties.'L1p-Trace-Id' == null ) ? java.util.UUID.randomUUID() : ( message.inboundProperties.'L1p-Trace-Id' ) ]" doc:name="set-L1p-Trace-Id"/>
         <logger level="INFO"
-                message="Received request with TraceID=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
-                category="com.l1p.interop.scheme.adapter.api-main" doc:name="Logger"/>
+                message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
+                category="com.l1p.interop.scheme.adapter.api-main" doc:name="Logger"/>	    
         <apikit:router config-ref="scheme-adapter-config" doc:name="APIkit Router"/>
         <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
