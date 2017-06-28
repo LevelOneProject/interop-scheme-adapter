@@ -137,10 +137,10 @@ definitions:
     - "amountType"
     - "payee"
     - "payer"
-    - "paymentId"
+    - "transferId"
     - "transferType"
     properties:
-      paymentId:
+      transferId:
         type: "string"
       payer:
         $ref: "#/definitions/Person"
@@ -162,7 +162,7 @@ definitions:
     required:
     - "payeeCommission"
     - "payeeFee"
-    - "paymentId"
+    - "transferId"
     - "receiveAmount"
     properties:
       paymentId:

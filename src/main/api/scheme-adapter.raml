@@ -8,7 +8,7 @@ types:
   QuoteRequest:
     type: object
     properties:
-      paymentId: string
+      transferId: string
       payer: Person
       payee: Person
       amountType:
@@ -21,7 +21,7 @@ types:
   QuoteResponse:
     type: object
     properties:
-      paymentId: string
+      transferId: string
       receiveAmount: Amount
       payeeFee: Amount
       payeeCommission: Amount
