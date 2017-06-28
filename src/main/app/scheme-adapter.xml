@@ -45,7 +45,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			message="Returning get:/query response for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], receiver=#[sessionVars.receiver], http.status=#[message.outboundProperties.'http.status']"
 			category="com.l1p.interop.spsp.query" doc:name="logger" />
 		<logger level="DEBUG"
-			message="Returning get:/query response for TraceID=#[sessionVars.TraceID], receiver=#[sessionVars.receiver], http.status=#[message.outboundProperties.'http.status']: #[payload]"
+			message="Returning get:/query response for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], receiver=#[sessionVars.receiver], http.status=#[message.outboundProperties.'http.status']: #[payload]"
 			category="com.l1p.interop.spsp.query" doc:name="logger" />
 	</flow>
 
