@@ -45,6 +45,7 @@ Project is built using Maven and uses Circle for Continous Integration.
 [pom.xml](./pom.xml) and [circle.yml](./circle.yml) can be found in the repo, also linked here
 
 ## API
+[Endpoints Documentation](./API.md)
 
 Below are the RAML and OpenAPI spec for reference
 
