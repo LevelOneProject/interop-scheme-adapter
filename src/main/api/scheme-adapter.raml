@@ -8,7 +8,7 @@ types:
   QuoteRequest:
     type: object
     properties:
-      transferId: string
+      paymentId: string
       payer: Person
       payee: Person
       amountType:
@@ -21,7 +21,7 @@ types:
   QuoteResponse:
     type: object
     properties:
-      transferId: string
+      paymentId: string
       receiveAmount: Amount
       payeeFee: Amount
       payeeCommission: Amount
@@ -50,6 +50,27 @@ types:
       rejectionMessage: string
       fulfillment: string
 
+  Invoice:
+      type: object
+      properties:
+        id?:
+          type: string
+          pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
+        senderIdentifier: string
+        type?: string
+        account?: string
+        currencyCode?: string
+        currencySymbol?: string
+        amount?:
+          type: string
+          pattern: ^[-+]?[0-9]*[.]?[0-9]+([eE][-+]?[0-9]+)?$
+        status?:
+          enum: [ paid, unpaid, pending, cancelled ]
+        invoiceInfo?: string
+        memo: string
+        invoiceUrl:
+          type: string
+          pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
   Person:
     type: object
     properties:
