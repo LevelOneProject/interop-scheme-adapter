@@ -85,12 +85,12 @@ This endpoint allows a DFSP to request for a quote.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | paymentId | UUID | Unique Identifier |
-| payer | Object | Person initiating the quote |
+| **payer** | **Object** | **Person initiating the quote** |
 | payer.identifier | String | Payer Id |
 | payer.identifierType | String | Central Directory Registry Type |
 | payer.url | URL | Base URL at which the payer information can be retrieved from |
 | payer.account | String | Payer Ledger Account |
-| payee | Object | Person for whom the quote is being requested for |
+| **payee** | **Object** | **Person for whom the quote is being requested for** |
 | payee.identifier | String | Payee Id |
 | payee.identifierType | String | Central Directory Registry Type |
 | payee.url | URL | Base URL at which the payee information can be retrieved from |
@@ -177,7 +177,7 @@ Content-Type: application/json
 
 
 ### **Submit Payment**
-This endpoint is used to submit p2p and invoice payments. This is a pass through of the underlying ilp-service /payIPR endpoint
+This endpoint is used to submit p2p and invoice payments. This is a pass through of the underlying [ilp-service](https://github.com/LevelOneProject/ilp-service)  /payIPR endpoint
 
 #### HTTP Request
 ```GET http://scheme-adapter/payment```
