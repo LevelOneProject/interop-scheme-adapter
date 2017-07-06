@@ -162,6 +162,9 @@ types:
       id: string
       message: string
 
+
+
+
 /query:
     displayName: Query ( GET <receiver> )
     get:
@@ -278,5 +281,43 @@ types:
       responses:
         200:
           description: "Success"
-          
 
+/invoices:
+    post:
+        description: Submit Invoice Method
+        body:
+          application/json:
+            type: Invoice
+            example:
+              id: "https://merchant-spspserver.example/invoices/12345"
+              senderIdentifier: "1234567890"
+              type: "invoice"
+              account: "usd.examplebank.merchant"
+              currencyCode: "USD"
+              currencySymbol: "$"
+              memo: "pending amound 10.40"
+              amount: "10.40"
+              status: "unpaid"
+              invoiceInfo: "https://merchant-website.example/gp/your-account/order-details?ie=UTF8&orderID=111-7777777-1111111"
+              invoiceUrl: "https://merchant-spspserver.example/invoices/12345"
+        responses:
+          200:
+
+    get:
+      description:
+      queryParameters:
+        invoiceUrl: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: Invoice
+
+    /{invoiceId}:
+      get:
+        description:
+        responses:
+          200:
+            body:
+              application/json:
+                type: Invoice
