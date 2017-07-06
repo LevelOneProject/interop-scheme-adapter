@@ -45,7 +45,7 @@ POST http://host:8088/scheme/adapter/v1/invoices HTTP/1.1
 Content-Type: application/json
 {
   "invoiceId": "3",
-  "submissionUrl": "http://ec2-35-163-249-3.us-west-2.compute.amazonaws.com:3043/v1/invoices",
+  "submissionUrl": "receiver-dfsp-host:8088/scheme/adapter/v1",
   "senderIdentifier": "78956562",
   "memo": "Invoice from merchant for 100 USD"
 }

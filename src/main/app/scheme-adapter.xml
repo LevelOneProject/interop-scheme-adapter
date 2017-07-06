@@ -4,14 +4,7 @@
 	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json="http://www.mulesoft.org/schema/mule/json"
 	xmlns:metrics="http://www.mulesoft.org/schema/mule/metrics" xmlns:spring="http://www.springframework.org/schema/beans"
 	xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd
-http://www.mulesoft.org/schema/mule/metrics http://www.mulesoft.org/schema/mule/metrics/current/mule-metrics.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
-http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd http://www.mulesoft.org/schema/mule/metrics http://www.mulesoft.org/schema/mule/metrics/current/mule-metrics.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
 
 	<http:request-config name="ilp-service-http-config" host="${ilp-host}" port="${ilp-service.port}"
 		doc:name="ILP-Service HTTP Request Configuration" responseTimeout="30000" />
@@ -25,8 +18,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="get:/health:scheme-adapter-config">
 		<set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload" />
 	</flow>
-
-
 
 	<flow name="get:/query:scheme-adapter-config">
 		<set-session-variable variableName="receiver"
@@ -93,7 +84,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<set-session-variable variableName="payeeUrl" value="#[payload.payee.url]"
 							doc:name="Save Input Receiver URL" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
-						<set-property propertyName="initiator" value="PROXY"></set-property>
+						<set-property propertyName="initiator" value="PROXY" />
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
@@ -167,14 +158,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<!-- Call GET /ilpAddress on Scheme Adapter on Payee side -->
 						<set-session-variable variableName="payeeUrl" value="#[payload.payee.url]"
 							doc:name="Save Input Receiver URL" />
-							<set-session-variable variableName="inputAmount" value="#[payload.amount.amount]"
-								doc:name="Save Input Amount" />
+						<set-session-variable variableName="inputAmount" value="#[payload.amount.amount]"
+							doc:name="Save Input Amount" />
 						<set-session-variable variableName="payeeLedgerAccount" value="#[payload.payee.account]"
 							doc:name="Save Payee ledger account" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
 						<logger level="INFO"
-									message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
-									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
+							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 						<http:outbound-endpoint
 							address="http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount]"
 							method="GET" exchange-pattern="request-response" doc:name="Generic" />
@@ -218,28 +209,25 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 											expression="#[sessionVars.originalQuoteRequestMap.get(&quot;amount&quot;).put(&quot;amount&quot;,sessionVars.destinationAmount);  sessionVars.originalQuoteRequestMap]"
 											doc:name="Update dfsp request with destination amount from ilp-service /quoteSourceAmount" />
 										<json:object-to-json-transformer doc:name="Object to JSON" />
-										<set-property propertyName="initiator" value="PROXY"></set-property>
+										<set-property propertyName="initiator" value="PROXY" />
 										<logger level="INFO"
 											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 										<http:outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"
 											method="POST" exchange-pattern="request-response" doc:name="Generic" />
 										<logger level="INFO"
-											message="In Payer: Response from Payee scheme-adapter /quotes: #[message.payloadAs(java.lang.String)]" category="com.l1p.interop.scheme.adapter.quote"
-											doc:name="logger" />
-                                        <json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
-                                                                         returnClass="java.util.HashMap" />
-                                        <!-- <set-session-variable variableName="receiveAmount"
-                                              value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount)-Integer.parseInt(payload.payeeFee.amount)-Integer.parseInt(payload.payeeCommission.amount))]"
-                                              doc:name="Calculate reeiveAmount that scheme-adapter needs to send to Payer dfsp" /> -->
-                                        <set-session-variable variableName="receiveAmount"
-                                              value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount))]"
-                                              doc:name="Calculate reeiveAmount that scheme-adapter needs to send to Payer dfsp" />      
+											message="In Payer: Response from Payee scheme-adapter /quotes: #[message.payloadAs(java.lang.String)]"
+											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+										<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
+											returnClass="java.util.HashMap" />
+										<!-- <set-session-variable variableName="receiveAmount" value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount)-Integer.parseInt(payload.payeeFee.amount)-Integer.parseInt(payload.payeeCommission.amount))]" 
+											doc:name="Calculate reeiveAmount that scheme-adapter needs to send to Payer dfsp" /> -->
+										<set-session-variable variableName="receiveAmount"
+											value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount))]" doc:name="Calculate reeiveAmount that scheme-adapter needs to send to Payer dfsp" />
 										<expression-transformer
 											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,sessionVars.receiveAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   payload.put(&quot;receiveAmount&quot;,receiveAmountMap); payload]"
 											doc:name="Update dfsp response with quoteIPR response" />
-										
-                                        <json:object-to-json-transformer doc:name="Object to JSON" />
+										<json:object-to-json-transformer doc:name="Object to JSON" />
 									</when>
 									<otherwise>
 										<logger level="INFO"
@@ -254,7 +242,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 							</otherwise>
 						</choice>
-
 					</when>
 					<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
 						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="Flow Reference" />
@@ -283,7 +270,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
 		<object-to-string-transformer doc:name="Object to String" mimeType="application/json" />
 	</flow>
-
 	<flow name="get:/ilpAddress:scheme-adapter-config">
 		<logger level="INFO"
 			message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/ilpAddress?account=#[message.inboundProperties.'http.query.params'.account], method=GET Payload: #[payload]"
@@ -301,6 +287,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<object-to-string-transformer doc:name="Object to String" />
 	</flow>
+
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
 	</flow>
@@ -314,8 +301,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			doc:name="Save Input Receiver URL" />
 		<set-session-variable variableName="inputReceiveAmount" value="#[payload.amount.amount]"
 			doc:name="Save Input Amount" />
-        <set-session-variable variableName="amountType" value="#[payload.amountType]"
-                              doc:name="Save Input Amount Type" />
+		<set-session-variable variableName="amountType" value="#[payload.amountType]"
+			doc:name="Save Input Amount Type" />
 		<expression-transformer doc:name="Update transferType before sending to dfsp"
 			expression="#[payload.get(&quot;payee&quot;).remove(&quot;url&quot;) ;payload]" />
 		<json:object-to-json-transformer doc:name="Object to JSON" />
@@ -345,20 +332,18 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<set-session-variable variableName="expiresAt" value="#[payload.expiresAt]"
 					doc:name="Save expiresAt" />
 				<!-- Section for calling ilp-service createIPR -->
-                <choice doc:name="Check if input amount type is rECEIVE/SEND">
-                    <when expression="#[sessionVars.amountType == 'RECEIVE']">
-                        <set-session-variable variableName="destinationAmount"
-                                              value="#[String.valueOf(Integer.parseInt(sessionVars.inputReceiveAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]"
-                                              doc:name="Calculate total amount the Payee dfsp needs" />
-
-                    </when>
-                    <when expression="#[sessionVars.amountType == 'SEND']">
-                        <set-session-variable variableName="destinationAmount"
-                                              value="#[String.valueOf(Integer.parseInt(sessionVars.inputReceiveAmount)-Integer.parseInt(sessionVars.dfspPayeeFee)-Integer.parseInt(sessionVars.dfspPayeeCommission))]"
-                                              doc:name="Calculate total amount the Payee dfsp needs" />
-
-                    </when>
-                </choice>
+				<choice doc:name="Check if input amount type is rECEIVE/SEND">
+					<when expression="#[sessionVars.amountType == 'RECEIVE']">
+						<set-session-variable variableName="destinationAmount"
+							value="#[String.valueOf(Integer.parseInt(sessionVars.inputReceiveAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]"
+							doc:name="Calculate total amount the Payee dfsp needs" />
+					</when>
+					<when expression="#[sessionVars.amountType == 'SEND']">
+						<set-session-variable variableName="destinationAmount"
+							value="#[String.valueOf(Integer.parseInt(sessionVars.inputReceiveAmount)-Integer.parseInt(sessionVars.dfspPayeeFee)-Integer.parseInt(sessionVars.dfspPayeeCommission))]"
+							doc:name="Calculate total amount the Payee dfsp needs" />
+					</when>
+				</choice>
 				<set-session-variable variableName="createIPRRequestMap" value="#[new java.util.HashMap()]"
 					doc:name="Instantiate empty createIPR Request" />
 				<expression-transformer
@@ -390,7 +375,110 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 			</otherwise>
 		</choice>
-
 	</sub-flow>
+
+	<flow name="post:/invoices:application/json:scheme-adapter-config">
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="invoice.post.start"
+			doc:name="SnapTime" />
+		<choice doc:name="Check for initiator PROXY">
+			<when expression="#[message.inboundProperties.'initiator'== null]">
+				<json:json-to-object-transformer doc:name="Convert incoming payload to Map"
+					returnClass="java.util.HashMap" />
+				<set-session-variable value="#[payload.get(&quot;submissionUrl&quot;)]"
+					variableName="receiverUrl"></set-session-variable>
+				<expression-transformer
+					expression="#[payload.put(&quot;invoiceUrl&quot;,&quot;${proxy-host}:${proxy-port}/scheme/adapter/v1/invoices/payload.get(&quot;id&quot;)&quot;); payload]"
+					doc:name="Update dfsp response with createIPR response" />
+				<set-property propertyName="initiator" value="PROXY" />
+				<json:object-to-json-transformer doc:name="Convert Map to String" />
+				<http:outbound-endpoint address="http://#[sessionVars.receiverUrl]/invoices"
+					method="POST" exchange-pattern="request-response" doc:name="Generic" />
+			</when>
+			<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
+				<logger level="INFO"
+					message="Sending request for post:/invoices to payee dfsp, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
+					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
+				<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
+					doc:name="PropertyHttpL1p-Trace-Id" />
+				<http:request config-ref="dfsp-api-http-config" path="/invoices" method="POST"
+					doc:name="HTTP">
+					<http:request-builder>
+						<http:header headerName="Authorization" value="#['Basic ']${auth_value}" />
+					</http:request-builder>
+					<http:success-status-code-validator values="200,201" />
+				</http:request>
+
+				<logger level="INFO"
+					message="Processing complete for post:/invoices, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload]"
+					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
+				<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
+					doc:name="Property" />
+				<metrics:snap-time config-ref="metricsConfig" snapTimeKey="payments.invoice.post.stop"
+					doc:name="SnapTime" />
+				<metrics:time config-ref="metricsConfig" beginSnapKey="payments.invoice.post.start"
+					endSnapKey="payments.invoice.post.stop" category="l1p.spsp-backend.payments.api" metricKey="PaymentsInvoicePostTime"
+					doc:name="Metrics Record" />
+			</when>
+			<otherwise>
+			</otherwise>
+		</choice>
+
+		<!--<metrics:inc-count config-ref="metricsConfig" category="l1p.spsp-backend.payments.api" doc:name="metrics-count"> -->
+		<!--<metrics:metric-keys><metrics:metric-key>PaymentsInvoicePostRequest</metrics:metric-key></metrics:metric-keys> -->
+		<!--</metrics:inc-count> -->
+	</flow>
+
+	<flow name="get:/invoices/{invoiceId}:scheme-adapter-config">
+
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.start"
+			doc:name="SnapTime" />
+		<set-session-variable variableName="invoiceID"
+			value="#[message.inboundProperties.'http.uri.params'.invoiceID]" doc:name="save-uri-parameter" />
+		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
+			doc:name="PropertyHttpL1p-Trace-Id" />
+		<logger level="INFO"
+			message="Processing request for get:/invoices/{invoice}, host: ${dfsp-host}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
+			category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
+		<http:request config-ref="dfsp-api-http-config" path="$/invoices/#[sessionVars.invoiceID]"
+			method="GET" doc:name="HTTP">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="#['Basic ']${auth_value}" />
+			</http:request-builder>
+			<http:success-status-code-validator values="200,201,400" />
+		</http:request>
+
+		<object-to-string-transformer doc:name="Object to String" />
+		<choice doc:name="Update port in account URL if valid">
+			<when expression="#[message.inboundProperties.'http.status' == 200]">
+				<transformer ref="actualLedgerToLedgerAdapterUrlTransformer" doc:name="Transform Ledger URL" />
+			</when>
+			<otherwise>
+				<logger message="Failed to get account #[payload]" level="ERROR"
+					category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="Logger" />
+			</otherwise>
+		</choice>
+		<json:object-to-json-transformer doc:name="Object to JSON" />
+
+		<logger level="INFO"
+			message="Processing complete for get:/receivers/invoices/{invoice}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
+			category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
+		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
+			doc:name="Property" />
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.stop"
+			doc:name="SnapTime" />
+		<metrics:time config-ref="metricsConfig" beginSnapKey="fetch.invoice.get.start"
+			endSnapKey="fetch.invoice.get.stop" category="l1p.spsp-backend.fetch.api" metricKey="FetchInvoiceGetTime"
+			doc:name="Metrics Record" />
+
+	</flow>
+
+	<flow name="get:/invoices:scheme-adapter-config">
+		<set-session-variable value="#[message.inboundProperties.'http.query.params'.invoiceUrl]"
+			variableName="invoiceUrl" doc:name="Session Variable" />
+		<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]/invoices"
+			method="GET" exchange-pattern="request-response" doc:name="Generic" />
+	</flow>
+
+
 
 </mule>
