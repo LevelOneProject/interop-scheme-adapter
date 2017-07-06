@@ -64,7 +64,7 @@ HTTP/1.1 201 CREATED
 This endpoint allows retrieval of the invoice based on ID. Query Parameter invoiceUrl indicates the location of invoice on the merchant side.
 
 #### HTTP Request
-```GET http://host:8088/scheme/adapter/v1/invoices?invoiceUrl=http://merchant-dfsp-host:8088/scheme/adapter/v1/invoices```
+```GET http://host:8088/scheme/adapter/v1/invoices?invoiceUrl=http://merchant-dfsp-host:8088/scheme/adapter/v1/invoices/123```
 
 
 #### Response 200 OK
@@ -276,7 +276,7 @@ A resource object can have the following fields:
 | ---- | ---- | ----------- |
 | invoiceId | string | Invoice ID |
 | senderId | String | Sender ID |
-| submissionUrl | URL | URL of the merchant that is sending the invoice |
+| submissionUrl | URL | URL of the receiver that is receiving the invoice |
 | invoiceUrl | URL | (optional)URL of the receiver(payer) |
 | memo | String | Information placeholder |
 
