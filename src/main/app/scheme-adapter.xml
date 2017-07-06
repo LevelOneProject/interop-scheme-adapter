@@ -420,8 +420,7 @@
 					endSnapKey="payments.invoice.post.stop" category="l1p.spsp-backend.payments.api" metricKey="PaymentsInvoicePostTime"
 					doc:name="Metrics Record" />
 			</when>
-			<otherwise>
-			</otherwise>
+			
 		</choice>
 
 		<!--<metrics:inc-count config-ref="metricsConfig" category="l1p.spsp-backend.payments.api" doc:name="metrics-count"> -->

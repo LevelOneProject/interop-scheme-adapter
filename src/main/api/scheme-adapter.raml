@@ -53,24 +53,29 @@ types:
   Invoice:
       type: object
       properties:
-        id?:
+        invoiceId: string
+        senderIdentifier: string
+        invoiceUrl?:
           type: string
           pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
-        senderIdentifier: string
-        type?: string
-        account?: string
+        submissionUrl:
+          type: string
+          #pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
+        memo: string
+        account?:
+          type: string
+          pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
         currencyCode?: string
         currencySymbol?: string
+        name?: string
+        userNumber?: string
         amount?:
           type: string
           pattern: ^[-+]?[0-9]*[.]?[0-9]+([eE][-+]?[0-9]+)?$
         status?:
-          enum: [ paid, unpaid, pending, cancelled ]
+          enum: [ paid, unpaid, cancelled ]
         invoiceInfo?: string
-        memo: string
-        invoiceUrl:
-          type: string
-          pattern: ^((http(s?))\:\/\/)?((([a-zA-Z0-9_\-]{2,}\.)+[a-zA-Z]{2,})|((?:(?:25[0-5]|2[0-4]\d|[01]\d\d|\d?\d)( ?(\.?\d)\.)){4}))(:[a-zA-Z0-9]+)?(\/[a-zA-Z0-9\-\._\?\,\'\/\\\+&amp;%\$#\=~]*)?$
+      
   Person:
     type: object
     properties:
@@ -288,18 +293,6 @@ types:
         body:
           application/json:
             type: Invoice
-            example:
-              id: "https://merchant-spspserver.example/invoices/12345"
-              senderIdentifier: "1234567890"
-              type: "invoice"
-              account: "usd.examplebank.merchant"
-              currencyCode: "USD"
-              currencySymbol: "$"
-              memo: "pending amound 10.40"
-              amount: "10.40"
-              status: "unpaid"
-              invoiceInfo: "https://merchant-website.example/gp/your-account/order-details?ie=UTF8&orderID=111-7777777-1111111"
-              invoiceUrl: "https://merchant-spspserver.example/invoices/12345"
         responses:
           200:
 

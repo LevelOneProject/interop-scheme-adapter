@@ -275,10 +275,18 @@ A resource object can have the following fields:
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | invoiceId | string | Invoice ID |
-| senderId | String | Sender ID |
+| senderIdentifier | String | Sender ID |
 | submissionUrl | URL | URL of the receiver that is receiving the invoice |
 | invoiceUrl | URL | (optional)URL of the receiver(payer) |
 | memo | String | Information placeholder |
+| account | String | ledger account |
+| currencyCode | String | defaulted to "$" |
+| currencySymbol | String | defaulted to "USD" |
+| name | String | sender name |
+| userNumber | String | User Number |
+| amount | String | amount |
+| status | String | enum "paid, unpaid, cancelled " |
+| invoiceInfo | String | additional information about the invoice |
 
 
 ### Quote Object

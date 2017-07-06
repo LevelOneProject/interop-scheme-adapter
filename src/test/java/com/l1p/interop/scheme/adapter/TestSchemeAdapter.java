@@ -121,5 +121,11 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	public void testPayments() throws Exception {
 		
 	}
+	
+	@Test
+	@Ignore
+	public void testInvoices() throws Exception {
+		
+	}
 
 }
