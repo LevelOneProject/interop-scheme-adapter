@@ -387,19 +387,20 @@
 				<set-session-variable value="#[payload.get(&quot;submissionUrl&quot;)]"
 					variableName="receiverUrl"></set-session-variable>
 				<expression-transformer
-					expression="#[payload.put(&quot;invoiceUrl&quot;,&quot;${proxy-host}:${proxy-port}/scheme/adapter/v1/invoices/payload.get(&quot;id&quot;)&quot;); payload]"
+					expression="#[payload.put(&quot;invoiceUrl&quot;,&quot;${proxy-host}:${proxy-port}${scheme-adapter-service.basePath}/invoices/payload.get(&quot;id&quot;)&quot;); payload]"
 					doc:name="Update dfsp response with createIPR response" />
 				<set-property propertyName="initiator" value="PROXY" />
 				<json:object-to-json-transformer doc:name="Convert Map to String" />
+				<logger level="INFO"
+					message="Sending request to payee scheme-adapter at http://#[sessionVars.receiverUrl]/invoices. Payload: #[payload]"
+					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
 				<http:outbound-endpoint address="http://#[sessionVars.receiverUrl]/invoices"
 					method="POST" exchange-pattern="request-response" doc:name="Generic" />
 			</when>
 			<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
 				<logger level="INFO"
-					message="Sending request for post:/invoices to payee dfsp, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
+					message="Sending request to dfsp at http://${dfsp-host}:${dfsp-api.port}/invoices Payload:#[payload]"
 					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
-				<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
-					doc:name="PropertyHttpL1p-Trace-Id" />
 				<http:request config-ref="dfsp-api-http-config" path="/invoices" method="POST"
 					doc:name="HTTP">
 					<http:request-builder>
@@ -409,7 +410,7 @@
 				</http:request>
 
 				<logger level="INFO"
-					message="Processing complete for post:/invoices, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload]"
+					message="Response from dfsp-api /invoices: #[payload]"
 					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
 				<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 					doc:name="Property" />
