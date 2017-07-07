@@ -44,6 +44,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
+	@Ignore
 	public void testQuery() throws Exception {
 		String dfspReceiverResponseJson = loadResourceAsString("test_data/schemeAdapterReceiverMockResponse.json");
 		mockReceiverSchemeAdapter.stubFor(get(urlPathMatching("/scheme/adapter/v1/receivers/.*")).willReturn(aResponse().withBody(dfspReceiverResponseJson)));
@@ -66,6 +67,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
+	@Ignore
 	public void testReceivers() throws Exception {
 		
 		String dfspReceiverResponseJson = loadResourceAsString("test_data/dfspReceiverMockResponse.json");
@@ -123,9 +125,18 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
-	@Ignore
 	public void testInvoices() throws Exception {
-		
+		mockReceiverSchemeAdapter.stubFor(post(urlPathMatching("/scheme/adapter/v1/invoices")).willReturn(aResponse().withStatus(201)));
+    	
+		String proxyInvoiceRequestJson = loadResourceAsString("test_data/proxyInvoiceRequest.json");
+		given().
+        	contentType("application/json").
+        	body(proxyInvoiceRequestJson).
+        when().
+        	post("http://localhost:8088/scheme/adapter/v1/invoices").
+        then().
+        	statusCode(201);
+        
 	}
 
 }
