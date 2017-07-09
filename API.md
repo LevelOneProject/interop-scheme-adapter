@@ -180,7 +180,7 @@ Content-Type: application/json
 This endpoint is used to submit p2p and invoice payments. This is a pass through of the underlying [ilp-service](https://github.com/LevelOneProject/ilp-service)  /payIPR endpoint
 
 #### HTTP Request
-```GET http://scheme-adapter/payment```
+```POST http://scheme-adapter/payment```
 
 #### Request body
 | Name | Type | Description |
