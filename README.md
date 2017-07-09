@@ -51,8 +51,8 @@ Below are the RAML and OpenAPI spec for reference
 
 This is currently hosted as a service in the URL that looks like this:  http://\<awshost:port\>/spsp/client/v1/console/ , the OpenAPI docs and mule console details can be found [here](https://github.com/LevelOneProject/Docs/tree/master/AWS/Infrastructure/PI4-QA-Env) and [here](https://github.com/LevelOneProject/Docs/tree/master/AWS/Infrastructure/PI4-Test-Env)
 
-* RAML [here](./src/main/api/interop-scheme-adapter.raml)
-* OpenAPI [here](./src/main/resources/documentation/dist/interop-scheme-adapter.yaml)
+* RAML [here](./src/main/api/scheme-adapter.raml)
+* OpenAPI [here](./src/main/resources/documentation/dist/scheme-adapter.yaml)
 
 ## Logging
 
