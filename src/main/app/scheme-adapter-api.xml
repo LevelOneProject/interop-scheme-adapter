@@ -19,81 +19,81 @@ http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/a
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
     
     <!-- Import common xml file that imports properties files at various levels -->
-	<spring:beans>
-        <spring:import resource="classpath:services-common.xml" />
-        <spring:import resource="classpath:metrics.xml" />
-    </spring:beans>
+	<!--<spring:beans>-->
+        <!--<spring:import resource="classpath:services-common.xml" />-->
+        <!--<spring:import resource="classpath:metrics.xml" />-->
+    <!--</spring:beans>-->
 
-    <spring:beans>
-        <spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>
-    </spring:beans>
-    
-    <!-- <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router" keepRamlBaseUri="false"/> -->
-    <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router"/>
-    <flow name="scheme-adapter-main">
-        <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/*" doc:name="HTTP"/>
-	<!-- Setting session variable L1p-Trace-Id to either L1p-Trace-Id header coming in if it exists or a generated UUID -->
-        <set-session-variable variableName="L1p-Trace-Id" value="#[ ( message.inboundProperties.'L1p-Trace-Id' == null ) ? java.util.UUID.randomUUID() : ( message.inboundProperties.'L1p-Trace-Id' ) ]" doc:name="set-L1p-Trace-Id"/>
-        <logger level="INFO"
-                message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
-                category="com.l1p.interop.scheme.adapter.api-main" doc:name="Logger"/>	    
-        <apikit:router config-ref="scheme-adapter-config" doc:name="APIkit Router"/>
-        <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
-    </flow>
-    <flow name="scheme-adapter-console">
-        <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.consolePath}/*" doc:name="HTTP"/>
-        <apikit:console config-ref="scheme-adapter-config" doc:name="APIkit Console"/>
-    </flow>
-    
-    <apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">
-        <apikit:mapping statusCode="404">
-            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error"  doc:name="metrics-count">
-                <metrics:metric-keys><metrics:metric-key>ResourceNotFound</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Resource not found" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-        <apikit:mapping statusCode="405">
-            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
-                <metrics:metric-keys><metrics:metric-key>MethodNotAllowed</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Method Not Allowed" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-        <apikit:mapping statusCode="415">
-            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
-                <metrics:metric-keys><metrics:metric-key>UnsupportedMediaType</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Unsupported MediaType" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-        <apikit:mapping statusCode="406">
-            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
-                <metrics:metric-keys><metrics:metric-key>NotAcceptable</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Not Acceptable" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-        <apikit:mapping statusCode="400">
-            <!-- <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" /> -->
-            <apikit:exception value="org.mule.module.http.internal.request.ResponseValidatorException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
-                <metrics:metric-keys><metrics:metric-key>BadRequest</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Bad request" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-        <apikit:mapping statusCode="500">
-            <apikit:exception value="org.mule.api.transformer.TransformerMessagingException" />
-            <metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">
-                <metrics:metric-keys><metrics:metric-key>TransformationException</metrics:metric-key></metrics:metric-keys>
-            </metrics:inc-count>
-            <set-session-variable variableName="errorMessageId" value="Transformer Messaging Exception" doc:name="set-errorMessageId"/>
-            <transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>
-        </apikit:mapping>
-    </apikit:mapping-exception-strategy>
+    <!--<spring:beans>-->
+        <!--<spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>-->
+    <!--</spring:beans>-->
+    <!---->
+    <!--&lt;!&ndash; <apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router" keepRamlBaseUri="false"/> &ndash;&gt;-->
+    <!--<apikit:config name="scheme-adapter-config" raml="scheme-adapter.raml" consoleEnabled="false" doc:name="Router"/>-->
+    <!--<flow name="scheme-adapter-main">-->
+        <!--<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/*" doc:name="HTTP"/>-->
+	<!--&lt;!&ndash; Setting session variable L1p-Trace-Id to either L1p-Trace-Id header coming in if it exists or a generated UUID &ndash;&gt;-->
+        <!--<set-session-variable variableName="L1p-Trace-Id" value="#[ ( message.inboundProperties.'L1p-Trace-Id' == null ) ? java.util.UUID.randomUUID() : ( message.inboundProperties.'L1p-Trace-Id' ) ]" doc:name="set-L1p-Trace-Id"/>-->
+        <!--<logger level="INFO"-->
+                <!--message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"-->
+                <!--category="com.l1p.interop.scheme.adapter.api-main" doc:name="Logger"/>	    -->
+        <!--<apikit:router config-ref="scheme-adapter-config" doc:name="APIkit Router"/>-->
+        <!--<exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>-->
+    <!--</flow>-->
+    <!--<flow name="scheme-adapter-console">-->
+        <!--<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.consolePath}/*" doc:name="HTTP"/>-->
+        <!--<apikit:console config-ref="scheme-adapter-config" doc:name="APIkit Console"/>-->
+    <!--</flow>-->
+    <!---->
+    <!--<apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">-->
+        <!--<apikit:mapping statusCode="404">-->
+            <!--<apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error"  doc:name="metrics-count">-->
+                <!--<metrics:metric-keys><metrics:metric-key>ResourceNotFound</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Resource not found" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+        <!--<apikit:mapping statusCode="405">-->
+            <!--<apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">-->
+                <!--<metrics:metric-keys><metrics:metric-key>MethodNotAllowed</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Method Not Allowed" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+        <!--<apikit:mapping statusCode="415">-->
+            <!--<apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">-->
+                <!--<metrics:metric-keys><metrics:metric-key>UnsupportedMediaType</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Unsupported MediaType" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+        <!--<apikit:mapping statusCode="406">-->
+            <!--<apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">-->
+                <!--<metrics:metric-keys><metrics:metric-key>NotAcceptable</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Not Acceptable" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+        <!--<apikit:mapping statusCode="400">-->
+            <!--&lt;!&ndash; <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" /> &ndash;&gt;-->
+            <!--<apikit:exception value="org.mule.module.http.internal.request.ResponseValidatorException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">-->
+                <!--<metrics:metric-keys><metrics:metric-key>BadRequest</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Bad request" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+        <!--<apikit:mapping statusCode="500">-->
+            <!--<apikit:exception value="org.mule.api.transformer.TransformerMessagingException" />-->
+            <!--<metrics:inc-count config-ref="metricsConfig" category="l1p.dfsp.directory.api.error">-->
+                <!--<metrics:metric-keys><metrics:metric-key>TransformationException</metrics:metric-key></metrics:metric-keys>-->
+            <!--</metrics:inc-count>-->
+            <!--<set-session-variable variableName="errorMessageId" value="Transformer Messaging Exception" doc:name="set-errorMessageId"/>-->
+            <!--<transformer ref="ExceptionTransformer" doc:name="ExceptionTransformer"/>-->
+        <!--</apikit:mapping>-->
+    <!--</apikit:mapping-exception-strategy>-->
 </mule>

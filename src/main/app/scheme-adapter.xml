@@ -22,32 +22,34 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<spring:constructor-arg value="${sidecar-server.host}" /> <spring:constructor-arg value="${sidecar-server.port}" 
 		/> </spring:bean> </spring:beans> -->
 
-	<flow name="get:/health:scheme-adapter-config">
-		<set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload" />
-	</flow>
+	<spring:beans>
+		<spring:import resource="classpath:services-common.xml" />
+		<spring:import resource="classpath:metrics.xml" />
+	</spring:beans>
 
-	<flow name="get:/query:scheme-adapter-config">
-		<set-session-variable variableName="receiver"
-			value="#[message.inboundProperties.'http.query.params'.receiver]" doc:name="save request params" />
+	<spring:beans>
+		<spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>
+	</spring:beans>
+
+	<sub-flow name="common_Flow">
+		<!-- <custom-transformer class="com.l1p.interop.ilp.ledger.BasicAuthCredentialsTransformer" doc:name="Basic Auth Transformer"/> -->
 		<logger level="INFO"
-			message="Proxying request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://#[message.inboundProperties.'http.query.params'.receiver], method=GET"
-			category="com.l1p.interop.spsp.query" doc:name="logger" />
-		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
-			doc:name="PropertyHttpL1p-Trace-Id" />
-		<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.receiver]"
-			method="GET" exchange-pattern="request-response" doc:name="Generic" />
-		<object-to-string-transformer doc:name="Object to String" />
-		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
-			doc:name="Property" />
-		<logger level="INFO"
-			message="Returning get:/query response for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], receiver=#[sessionVars.receiver], http.status=#[message.outboundProperties.'http.status']"
-			category="com.l1p.interop.spsp.query" doc:name="logger" />
-		<logger level="DEBUG"
-			message="Returning get:/query response for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], receiver=#[sessionVars.receiver], http.status=#[message.outboundProperties.'http.status']: #[payload]"
-			category="com.l1p.interop.spsp.query" doc:name="logger" />
+				message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
+				category="com.l1p.interop.ilp.ledger.api-main" doc:name="logger"/>
+		<object-to-string-transformer doc:name="Object to String"/>
+		<set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'L1p-Trace-Id' == null) ? java.util.UUID.randomUUID() : message.inboundProperties.'L1p-Trace-Id']" doc:name="set-L1p-Trace-Id"/>
+	</sub-flow>
+
+	<flow name="get:/health:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/health" allowedMethods="GET" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload" />
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="get:/receivers/{ID}:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/receivers/{ID}" allowedMethods="GET" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
 		<logger level="INFO"
@@ -79,9 +81,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 			doc:name="Property" />
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="post:/quotes:application/json:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/quotes" allowedMethods="POST" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<json:json-to-object-transformer returnClass="java.util.Map"
 			doc:name="Convert JSON Payload to Map" />
 		<choice doc:name="Check for amountType SEND/RECEIVE">
@@ -262,14 +267,13 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		</choice>
 		<!-- <set-payload value="#[payload]" doc:name="Set Payload"/> <set-property propertyName="http.status" 
 			value="#[message.inboundProperties.'http.status']" doc:name="Property" /> -->
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
-	<flow name="post:/payments:application/json:scheme-adapter-config">
-		<logger level="INFO"
-			message="Posting ILP Service /payIPR request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/payIPR, method=POST Payload: #[payload]"
-			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
-		<object-to-string-transformer doc:name="Object to String"/>
-        <transformer ref="actualLedgerToLedgerAdapterUrlTransformer" doc:name="Transform Ledger URL"/>
+	<flow name="put:/payments:application/json:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/payments" allowedMethods="PUT" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<transformer ref="actualLedgerToLedgerAdapterUrlTransformer" doc:name="Transform Ledger URL"/>
         <logger level="INFO"
 			message="Sending request to ilp-service/payIPR at http://${ilp-host}:${ilp-service.port}/payIPR  Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
@@ -281,6 +285,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			message="Respose from ilp-service /payIPR Payload: #[message.payloadAs(java.lang.String)]"
 			category="com.l1p.interop.scheme.adapter.payment" doc:name="logger" />
 		<object-to-string-transformer doc:name="Object to String" mimeType="application/json" />
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 	
 	<flow name="get:/ilpAddress:scheme-adapter-config">
@@ -299,10 +304,13 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			message="Respose from ilp-service /ilpAddress Payload: #[message.payloadAs(java.lang.String)]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<object-to-string-transformer doc:name="Object to String" />
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
+		<set-property propertyName="http.status" value="200"/>
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<sub-flow name="dfsp_quote-and-ilpservice_createIPR">
@@ -388,9 +396,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 			</otherwise>
 		</choice>
+
 	</sub-flow>
 
 	<flow name="post:/invoices:application/json:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices" allowedMethods="POST" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="invoice.post.start"
 			doc:name="SnapTime" />
 		<choice doc:name="Check for initiator PROXY">
@@ -438,10 +449,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					doc:name="Property" />
 			</when>
 		</choice>
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="get:/invoices/{invoiceId}:scheme-adapter-config">
-
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices/{invoiceId}" allowedMethods="GET" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.start"
 			doc:name="SnapTime" />
 		<set-session-variable variableName="invoiceID"
@@ -481,16 +494,24 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<metrics:time config-ref="metricsConfig" beginSnapKey="fetch.invoice.get.start"
 			endSnapKey="fetch.invoice.get.stop" category="l1p.spsp-backend.fetch.api" metricKey="FetchInvoiceGetTime"
 			doc:name="Metrics Record" />
-
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="get:/invoices:scheme-adapter-config">
+		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices" allowedMethods="GET" doc:name="HTTP"/>
+		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<set-session-variable value="#[message.inboundProperties.'http.query.params'.invoiceUrl]"
 			variableName="invoiceUrl" doc:name="Session Variable" />
 		<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]"
 			method="GET" exchange-pattern="request-response" doc:name="Generic" />
+		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
-
+	<catch-exception-strategy name="interop-catch-exception-strategy">
+		<set-property propertyName="Content-Type" value="application/json" doc:name="Property - content-type"/>
+		<set-property propertyName="http.status" value="501" doc:name="Property - http status"/>
+		<set-session-variable variableName="errorMessageId" value="Transformer Messaging Exception" doc:name="set-errorMessageId"/>
+		<transformer ref="ExceptionTransformer" doc:name="Exception Transformer"/>
+	</catch-exception-strategy>
 
 </mule>

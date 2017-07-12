@@ -35,7 +35,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	@Override
 	protected String getConfigResources() {
-		return "test-resources.xml,scheme-adapter-api.xml,scheme-adapter.xml";
+		return "test-resources.xml,scheme-adapter.xml";
 	}
 	
 	@BeforeClass
@@ -67,7 +67,6 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
-	@Ignore
 	public void testReceivers() throws Exception {
 		
 		String dfspReceiverResponseJson = loadResourceAsString("test_data/dfspReceiverMockResponse.json");
@@ -90,10 +89,9 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	
 	@Test
-	@Ignore
 	public void testQuotes() throws Exception {
 		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteMockResponse.json");
-		dfspQuoteService.stubFor(post(urlMatching("/v1/quote")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
+		dfspAPIService.stubFor(post(urlMatching("/quotes")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
 		
 		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
 		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
