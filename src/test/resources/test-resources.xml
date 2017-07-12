@@ -7,10 +7,12 @@
         xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
         xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
 		xmlns:http="http://www.mulesoft.org/schema/mule/http"
+        xmlns:metrics="http://www.mulesoft.org/schema/mule/metrics"
         xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd">
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/metrics http://www.mulesoft.org/schema/mule/metrics/current/mule-metrics.xsd">
 
 	<!-- Apikit HTTP configuration, which is normally referenced from domain -->
 	<http:listener-config name="api-httpListenerConfig" host="${proxy-service.host}" port="${proxy-service.port}" doc:name="HTTP Listener Configuration"/>

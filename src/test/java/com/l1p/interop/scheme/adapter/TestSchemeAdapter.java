@@ -123,6 +123,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
+	@Ignore
 	public void testInvoices() throws Exception {
 		mockReceiverSchemeAdapter.stubFor(post(urlPathMatching("/scheme/adapter/v1/invoices")).willReturn(aResponse().withStatus(201)));
     	

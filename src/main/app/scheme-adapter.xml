@@ -49,6 +49,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="get:/receivers/{ID}:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/receivers/{ID}" allowedMethods="GET" doc:name="HTTP"/>
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.mule-receivers-id.start" doc:name="SnapTime"/>
 		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
@@ -57,6 +58,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
 			doc:name="PropertyHttpL1p-Trace-Id" />
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.dfsp-receivers-id.start" doc:name="SnapTime"/>
 		<http:request config-ref="dfsp-api-http-config" path="/receivers/#[sessionVars.payee]"
 			method="GET" doc:name="HTTP">
 			<http:request-builder>
@@ -64,6 +66,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			</http:request-builder>
 			<http:success-status-code-validator values="200,400" />
 		</http:request>
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.dfsp-receivers-id.stop" doc:name="SnapTime"/>
+		<metrics:time config-ref="metricsConfig" beginSnapKey="get.dfsp-receivers-id.start" endSnapKey="get.dfsp-receivers-id.stop" category="l1p.scheme-adapter.dfsp-receivers-id.api" metricKey="DFSPGetReceivers" doc:name="Metrics Record"/>
 		<object-to-string-transformer doc:name="Object to String" />
 		<choice doc:name="Update Account URL if valid">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
@@ -81,11 +85,15 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 			doc:name="Property" />
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.mule-receivers-id.stop" doc:name="SnapTime"/>
+		<metrics:time config-ref="metricsConfig" beginSnapKey="get.mule-receivers-id.start" endSnapKey="get.mule-receivers-id.stop" category="l1p.scheme-adapter.receivers-id.api" metricKey="MuleGetReceivers" doc:name="Metrics Record"/>
+
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<flow name="post:/quotes:application/json:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/quotes" allowedMethods="POST" doc:name="HTTP"/>
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-quotes.start" doc:name="SnapTime"/>
 		<flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<json:json-to-object-transformer returnClass="java.util.Map"
 			doc:name="Convert JSON Payload to Map" />
@@ -100,8 +108,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+						<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
 						<outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"
 							exchange-pattern="request-response" doc:name="Call scheme-adapter /quotes" />
+						<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.stop" doc:name="SnapTime"/>
+						<metrics:time config-ref="metricsConfig" beginSnapKey="post.mule-payee-scheme-adapter-quotes.start" endSnapKey="post.mule-payee-scheme-adapter-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="MulePayeeSchemeAdapterPostQuote" doc:name="Metrics Record"/>
 						<choice doc:name="check if scheme-adapter /quotes is successful">
 							<when expression="#[message.inboundProperties.'http.status' == 200]">
 								<logger level="INFO"
@@ -115,14 +126,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 								<logger level="INFO"
 									message="Posting request to ilp-service /quoteIPR to http://${ilp-host}:${ilp-service.port}/quoteIPR?ipr=#[payload.ipr], method=GET"
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-								<http:request config-ref="ilp-service-http-config" path="/quoteIPR" method="GET"
+                                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-quoteIPR.start" doc:name="SnapTime"/>
+                                <http:request config-ref="ilp-service-http-config" path="/quoteIPR" method="GET"
 									doc:name="Call ilp-service /quoteIPR">
 									<http:request-builder>
 										<http:query-param paramName="ipr" value="#[payload.ipr]" />
 									</http:request-builder>
 									<http:success-status-code-validator values="200..599" />
 								</http:request>
-								<choice doc:name="check if ilp-service /quoteIPR is successful">
+                                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-quoteIPR.stop" doc:name="SnapTime"/>
+                                <metrics:time config-ref="metricsConfig" beginSnapKey="get.ilp-service-quoteIPR.start" endSnapKey="get.ilp-service-quoteIPR.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceQuoteIPR" doc:name="Metrics Record"/>
+                                <choice doc:name="check if ilp-service /quoteIPR is successful">
 									<when expression="#[message.inboundProperties.'http.status' == 200]">
 										<logger level="INFO"
 											message="Success response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)]"
@@ -152,8 +166,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						</choice>
 					</when>
 					<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
-						<flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="dfsp_quote-and-ilpservice_createIPR" />
-					</when>
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-quotes.start" doc:name="SnapTime"/>
+                        <flow-ref name="dfsp_quote-and-ilpservice_createIPR" doc:name="dfsp_quote-and-ilpservice_createIPR" />
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-quotes.stop" doc:name="SnapTime"/>
+                        <metrics:time config-ref="metricsConfig" beginSnapKey="post.mule-quotes.start" endSnapKey="post.mule-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="MulePostQuote" doc:name="Metrics Record"/>
+                    </when>
 					<otherwise>
 						<logger level="INFO" message="Initiator should either be PAYER/PROXY" category="com.l1p.interop.scheme.adapter.quote"
 							doc:name="logger" />
@@ -267,6 +284,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		</choice>
 		<!-- <set-payload value="#[payload]" doc:name="Set Payload"/> <set-property propertyName="http.status" 
 			value="#[message.inboundProperties.'http.status']" doc:name="Property" /> -->
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-quotes.stop" doc:name="SnapTime"/>
+        <metrics:time config-ref="metricsConfig" beginSnapKey="post.mule-quotes.start" endSnapKey="post.mule-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="MulePostQuote" doc:name="Metrics Record"/>
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
@@ -330,6 +349,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<logger level="INFO"
 			message="Posting request to Payee: http://${dfsp-host}:${dfsp-api.port}/quotes, method=post Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.start" doc:name="SnapTime"/>
 		<http:request config-ref="dfsp-api-http-config" path="/quotes" method="POST"
 			doc:name="Call dfsp-api /quote">
 			<http:request-builder>
@@ -337,6 +357,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			</http:request-builder>
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
+        <!--<metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-quotes.start" endSnapKey="post.dfsp-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>-->
 		<choice doc:name="Check if dfsp-api /quote call is success/failure">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
 				<logger level="INFO"
@@ -353,7 +375,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<set-session-variable variableName="expiresAt" value="#[payload.expiresAt]"
 					doc:name="Save expiresAt" />
 				<!-- Section for calling ilp-service createIPR -->
-				<choice doc:name="Check if input amount type is rECEIVE/SEND">
+				<choice doc:name="Check if input amount type is RECEIVE/SEND">
 					<when expression="#[sessionVars.amountType == 'RECEIVE']">
 						<set-session-variable variableName="destinationAmount"
 							value="#[String.valueOf(Integer.parseInt(sessionVars.inputReceiveAmount)+Integer.parseInt(sessionVars.dfspPayeeFee)+Integer.parseInt(sessionVars.dfspPayeeCommission))]"
@@ -375,11 +397,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<logger level="INFO"
 					message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/createIPR, method=post Payload: #[payload]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-				<http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST"
+                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.ilp-service-createIPR.start" doc:name="SnapTime"/>
+                <http:request config-ref="ilp-service-http-config" path="/createIPR" method="POST"
 					doc:name="Call ilp-service /createIPR">
 					<http:success-status-code-validator values="200..599" />
 				</http:request>
-				<logger level="INFO"
+                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.ilp-service-createIPR.stop" doc:name="SnapTime"/>
+                <!--<metrics:time config-ref="metricsConfig" beginSnapKey="post.ilp-service-createIPR.start" endSnapKey="post.ilp-service-createIPR.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceCreateIPR" doc:name="Metrics Record"/>-->
+                <logger level="INFO"
 					message="Response from ilp-service /createIPR: #[message.payloadAs(java.lang.String)] http status: #[message.inboundProperties.'http.status' == 200]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
@@ -491,9 +516,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			doc:name="Property" />
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.stop"
 			doc:name="SnapTime" />
-		<metrics:time config-ref="metricsConfig" beginSnapKey="fetch.invoice.get.start"
-			endSnapKey="fetch.invoice.get.stop" category="l1p.spsp-backend.fetch.api" metricKey="FetchInvoiceGetTime"
-			doc:name="Metrics Record" />
+		<!--<metrics:time config-ref="metricsConfig" beginSnapKey="fetch.invoice.get.start"-->
+			<!--endSnapKey="fetch.invoice.get.stop" category="l1p.spsp-backend.fetch.api" metricKey="FetchInvoiceGetTime"-->
+			<!--doc:name="Metrics Record" />-->
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
