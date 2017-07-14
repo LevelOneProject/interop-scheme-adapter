@@ -358,7 +358,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
-        <!--<metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-quotes.start" endSnapKey="post.dfsp-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>-->
+        <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-quotes.start" endSnapKey="post.dfsp-quotes.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>
 		<choice doc:name="Check if dfsp-api /quote call is success/failure">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
 				<logger level="INFO"
@@ -403,7 +403,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					<http:success-status-code-validator values="200..599" />
 				</http:request>
                 <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.ilp-service-createIPR.stop" doc:name="SnapTime"/>
-                <!--<metrics:time config-ref="metricsConfig" beginSnapKey="post.ilp-service-createIPR.start" endSnapKey="post.ilp-service-createIPR.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceCreateIPR" doc:name="Metrics Record"/>-->
+                <metrics:time config-ref="metricsConfig" beginSnapKey="post.ilp-service-createIPR.start" endSnapKey="post.ilp-service-createIPR.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceCreateIPR" doc:name="Metrics Record"/>
                 <logger level="INFO"
 					message="Response from ilp-service /createIPR: #[message.payloadAs(java.lang.String)] http status: #[message.inboundProperties.'http.status' == 200]"
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
