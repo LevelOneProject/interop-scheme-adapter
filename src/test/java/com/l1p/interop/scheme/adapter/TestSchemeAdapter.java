@@ -43,29 +43,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 		System.setProperty("MULE_ENV", "test");
 	}
 	
-	@Test
-	@Ignore
-	public void testQuery() throws Exception {
-		String dfspReceiverResponseJson = loadResourceAsString("test_data/schemeAdapterReceiverMockResponse.json");
-		mockReceiverSchemeAdapter.stubFor(get(urlPathMatching("/scheme/adapter/v1/receivers/.*")).willReturn(aResponse().withBody(dfspReceiverResponseJson)));
-    	
-		given().
-    		contentType("application/json").
-    		queryParam("receiver", "localhost:8090/scheme/adapter/v1/receivers/123456").
-        when().
-        	get("http://localhost:8088/scheme/adapter/v1/query").
-        then().
-        	statusCode(200).
-        	body("id", equalTo("http://ec2-35-166-180-190.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/alice")).
-        	body("name", equalTo("alice")).
-        	body("balance", equalTo("1000.00")).
-        	body("currencyCode", equalTo("USD")).
-        	body("currencySymbol", equalTo("$")).
-        	body("is_disabled", equalTo(false)).
-        	body("ledger", equalTo("http://ec2-35-166-180-190.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1"));
-		
-	}
-	
+
 	@Test
 	public void testReceivers() throws Exception {
 		
@@ -123,7 +101,6 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
-	@Ignore
 	public void testInvoices() throws Exception {
 		mockReceiverSchemeAdapter.stubFor(post(urlPathMatching("/scheme/adapter/v1/invoices")).willReturn(aResponse().withStatus(201)));
     	

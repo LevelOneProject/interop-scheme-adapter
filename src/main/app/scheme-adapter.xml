@@ -195,10 +195,13 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<logger level="INFO"
 							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<http:outbound-endpoint
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.start" doc:name="SnapTime"/>
+                        <http:outbound-endpoint
 							address="http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount]"
 							method="GET" exchange-pattern="request-response" doc:name="Generic" />
-						<choice doc:name="Check if ilp-service if /ilpAddress is successful">
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.stop" doc:name="SnapTime"/>
+                        <metrics:time config-ref="metricsConfig" beginSnapKey="get.ilp-service-getILPAddress.start" endSnapKey="get.ilp-service-getILPAddress.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceGetILPAddress" doc:name="Metrics Record"/>
+                        <choice doc:name="Check if ilp-service if /ilpAddress is successful">
 							<when expression="#[message.inboundProperties.'http.status' == 200]">
 								<logger level="INFO"
 									message="Success response from Scheme adapter /ilpAddress: #[message.payloadAs(java.lang.String)]"
@@ -211,7 +214,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 								<logger level="INFO"
 									message="Posting request to ilp-service to http://${ilp-host}:${ilp-service.port}/quoteSourceAmount, method=GET with query parameters: destinationAddress:#[sessionVars.ilpAddress] sourceAmount:#[sessionVars.originalQuoteRequestMap.amount.amount] connectorAccount:#[sessionVars.payeeLedgerAccount] destinationScale:1"
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-								<http:request config-ref="ilp-service-http-config" path="/quoteSourceAmount"
+                                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-quoteSourceAmount.start" doc:name="SnapTime"/>
+                                <http:request config-ref="ilp-service-http-config" path="/quoteSourceAmount"
 									method="GET" doc:name="Call ilp-service /quoteSourceAmount">
 									<http:request-builder>
 										<http:query-param paramName="destinationAddress" value="#[sessionVars.ilpAddress]" />
@@ -222,7 +226,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 									</http:request-builder>
 									<http:success-status-code-validator values="200..599" />
 								</http:request>
-								<choice doc:name="Check if ilp-service if /quoteSourceAmount is successful">
+                                <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-quoteSourceAmount.stop" doc:name="SnapTime"/>
+                                <metrics:time config-ref="metricsConfig" beginSnapKey="get.ilp-service-quoteSourceAmount.start" endSnapKey="get.ilp-service-quoteSourceAmount.stop" category="l1p.scheme-adapter.quotes.api" metricKey="ILPServiceGetQuoteSourceAmount" doc:name="Metrics Record"/>
+                                <choice doc:name="Check if ilp-service if /quoteSourceAmount is successful">
 									<when expression="#[message.inboundProperties.'http.status' == 200]">
 										<logger level="INFO"
 											message="Success response from ilp-service /quoteSourceAmount: #[message.payloadAs(java.lang.String)]"
@@ -327,6 +333,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	</flow>
 
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
+        <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/notifications" allowedMethods="POST" doc:name="HTTP"/>
+        <flow-ref name="common_Flow" doc:name="common_Flow"/>
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
 		<set-property propertyName="http.status" value="200"/>
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
