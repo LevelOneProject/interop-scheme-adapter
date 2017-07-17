@@ -31,18 +31,18 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>
 	</spring:beans>
 
-	<sub-flow name="common_Flow">
+	<sub-flow name="common-flow">
+        <set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'L1p-Trace-Id' == null) ? java.util.UUID.randomUUID() : message.inboundProperties.'L1p-Trace-Id']" doc:name="set-L1p-Trace-Id"/>
 		<!-- <custom-transformer class="com.l1p.interop.ilp.ledger.BasicAuthCredentialsTransformer" doc:name="Basic Auth Transformer"/> -->
 		<logger level="INFO"
 				message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
 				category="com.l1p.interop.ilp.ledger.api-main" doc:name="logger"/>
 		<object-to-string-transformer doc:name="Object to String"/>
-		<set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'L1p-Trace-Id' == null) ? java.util.UUID.randomUUID() : message.inboundProperties.'L1p-Trace-Id']" doc:name="set-L1p-Trace-Id"/>
 	</sub-flow>
 
 	<flow name="get:/health:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/health" allowedMethods="GET" doc:name="HTTP"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<set-payload value="{ &#xA;  &quot;status&quot; : &quot;ok&quot; &#xA;}" doc:name="Set Payload" />
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
@@ -50,7 +50,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="get:/receivers/{ID}:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/receivers/{ID}" allowedMethods="GET" doc:name="HTTP"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.mule-receivers-id.start" doc:name="SnapTime"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
 		<logger level="INFO"
@@ -94,7 +94,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="post:/quotes:application/json:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/quotes" allowedMethods="POST" doc:name="HTTP"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-quotes.start" doc:name="SnapTime"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<json:json-to-object-transformer returnClass="java.util.Map"
 			doc:name="Convert JSON Payload to Map" />
 		<choice doc:name="Check for amountType SEND/RECEIVE">
@@ -297,7 +297,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="put:/payments:application/json:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/payments" allowedMethods="PUT" doc:name="HTTP"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<transformer ref="actualLedgerToLedgerAdapterUrlTransformer" doc:name="Transform Ledger URL"/>
         <logger level="INFO"
 			message="Sending request to ilp-service/payIPR at http://${ilp-host}:${ilp-service.port}/payIPR  Payload: #[payload]"
@@ -334,9 +334,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
         <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/notifications" allowedMethods="POST" doc:name="HTTP"/>
-        <flow-ref name="common_Flow" doc:name="common_Flow"/>
+        <flow-ref name="common-flow" doc:name="common-flow"/>
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
-		<set-property propertyName="http.status" value="200"/>
+		<set-property propertyName="http.status" value="200" doc:name="Property"/>
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
@@ -434,7 +434,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="post:/invoices:application/json:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices" allowedMethods="POST" doc:name="HTTP"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="invoice.post.start"
 			doc:name="SnapTime" />
 		<choice doc:name="Check for initiator PROXY">
@@ -487,7 +487,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="get:/invoices/{invoiceId}:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices/{invoiceId}" allowedMethods="GET" doc:name="HTTP"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.start"
 			doc:name="SnapTime" />
 		<set-session-variable variableName="invoiceID"
@@ -532,7 +532,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 	<flow name="get:/invoices:scheme-adapter-config">
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices" allowedMethods="GET" doc:name="HTTP"/>
-		<flow-ref name="common_Flow" doc:name="common_Flow"/>
+		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<set-session-variable value="#[message.inboundProperties.'http.query.params'.invoiceUrl]"
 			variableName="invoiceUrl" doc:name="Session Variable" />
 		<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]"
