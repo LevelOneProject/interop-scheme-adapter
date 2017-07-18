@@ -1,6 +1,6 @@
 {
     "invoiceId": "3",
-    "submissionUrl": "localhost:8090/scheme/adapter/v1",
+    "submissionUrl": "localhost:8090/scheme/adapter/v1/invoices",
     "senderIdentifier": "78956562",
     "memo": "Invoice from merchant for 100 USD"
 }
