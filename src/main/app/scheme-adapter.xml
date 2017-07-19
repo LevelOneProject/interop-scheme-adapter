@@ -55,7 +55,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
 		<logger level="INFO"
-			message="Processing request for GET on http://${dfsp-host}:${dfsp-api.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee]"
+			message="Processing request for GET on http://${dfsp-host}:${dfsp-api.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Authorization=#['Basic ']${dfsp-api.auth_value}"
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
 			doc:name="PropertyHttpL1p-Trace-Id" />
@@ -539,7 +539,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<logger level="INFO"
 			message="Sending request to GET http://${dfsp-host}:${dfsp-api.port}/invoices/#[message.inboundProperties.'http.uri.params'.invoiceId], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
 			category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
-		<http:request config-ref="dfsp-api-http-config" path="$/invoices/#[message.inboundProperties.'http.uri.params'.invoiceId]"
+		<http:request config-ref="dfsp-api-http-config" path="/invoices/#[message.inboundProperties.'http.uri.params'.invoiceId]"
 			method="GET" doc:name="HTTP">
 			<http:request-builder>
 				<http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
