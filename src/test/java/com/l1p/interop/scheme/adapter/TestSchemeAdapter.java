@@ -161,8 +161,9 @@ public class TestSchemeAdapter extends FunctionalTestCase {
     	
 		given().
     		contentType("application/json").
+    		queryParam("account", "123456").
     	when().
-        	get("http://localhost:8088/scheme/adapter/v1/ilpAddress/123456").
+        	get("http://localhost:8088/scheme/adapter/v1/ilpAddress").
         then().
         	statusCode(200).
         	body("ilpAddress", equalTo("ok"));
