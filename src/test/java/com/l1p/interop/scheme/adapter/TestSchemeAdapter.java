@@ -59,7 +59,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
         	body("name", equalTo("alice")).
         	body("balance", equalTo("1000.00")).
         	body("currencyCode", equalTo("USD")).
-        	body("currencySymbol", equalTo("$")).
+        	body("currencySymbol", equalTo("$")).	
         	body("is_disabled", equalTo(false)).
         	body("ledger", equalTo("http://ec2-35-166-180-190.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1"));
 		
@@ -119,6 +119,103 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	@Test
 	@Ignore
 	public void testPayments() throws Exception {
+		
+		//TODO: update this method copied from testQuotes() for testPayments()
+		String paymentMockResponseJson = loadResourceAsString("test_data/paymentMockResponse.json");
+		dfspQuoteService.stubFor(post(urlMatching("/v1/payments")).willReturn(aResponse().withBody(paymentMockResponseJson)));
+		
+/*      //From testQuotes() method
+ 		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
+		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
+
+		String ilpServiceMockQuoteIPRMockJson = loadResourceAsString("test_data/ilpServiceQuoteIPRMockResponse.json");
+		ilpService.stubFor(get(urlPathMatching("/quoteIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockQuoteIPRMockJson)));
+		
+*/
+		
+		String proxyPaymentRequestJson = loadResourceAsString("test_data/proxyPaymentRequest.json");
+		Response response =
+        	given().
+            	contentType("application/json").
+            	body(proxyPaymentRequestJson).
+            when().
+            	post("http://localhost:8088/scheme/adapter/v1/payments");
+		
+		logger.info("Response: "+response.asString());
+		
+	    assertEquals("paymentId","123456",(String)response.jsonPath().get("paymentId"));
+		assertEquals("connectorAccount","123456",(String)response.jsonPath().get("connectorAccount"));
+	    assertEquals("status","1",(String)response.jsonPath().get("status"));
+	    assertEquals("rejectionMessage","rejection message",(String)response.jsonPath().get("rejectionMessage"));
+		assertEquals("fulfillment","fulfillment",(String)response.jsonPath().get("fulfillment"));
+		
+		
+	}
+
+	@Test
+	@Ignore
+	public void testIlpAddress() throws Exception {
+		
+		String ilpAddressResponseJson = loadResourceAsString("test_data/ilpAddressMockResponse.json");
+		dfspAPIService.stubFor(get(urlPathMatching("/ilpAddress/.*")).willReturn(aResponse().withBody(ilpAddressResponseJson)));
+    	
+		given().
+    		contentType("application/json").
+    	when().
+        	get("http://localhost:8088/scheme/adapter/v1/ilpAddress/123456").
+        then().
+        	statusCode(200).
+        	body("ilpAddress", equalTo("ok"));
+		
+	}
+	
+	
+	@Test
+	@Ignore
+	public void testNotifications() throws Exception {
+		
+		//TODO: update this method copied from testQuotes() for testNotifications()
+		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteMockResponse.json");
+		dfspQuoteService.stubFor(post(urlMatching("/v1/quote")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
+		
+		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
+		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
+
+		String ilpServiceMockQuoteIPRMockJson = loadResourceAsString("test_data/ilpServiceQuoteIPRMockResponse.json");
+		ilpService.stubFor(get(urlPathMatching("/quoteIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockQuoteIPRMockJson)));
+		
+		String proxyQuoteRequestJson = loadResourceAsString("test_data/proxyQuoteRequest.json");
+		Response response =
+        	given().
+            	contentType("application/json").
+            	body(proxyQuoteRequestJson).
+            when().
+            	post("http://localhost:8088/scheme/adapter/v1/quotes");
+		
+		logger.info("Response: "+response.asString());
+		
+	    assertEquals("receiveAmount","10",(String)response.jsonPath().get("receiveAmount.amount"));
+		assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
+	    assertEquals("payeeCommission","1",(String)response.jsonPath().get("payeeCommission.amount"));
+	    assertEquals("ipr","Aojf9Pq9_RKgnS3mzvYnZAXvJuvjWnw6r-JXdwitLmHygdQBgdEAAAAAAAAEsDZsZXZlbG9uZS5kZnNwMS5hbGljZS5TdXVPNUdhaDUxSXM3VzVyUkdXdVBnTWVSdGtKOXZPelGBj1BTSy8xLjAKTm9uY2U6IHRsNF93NVRfaGhLM0FFcWJ3Ukg3VVEKRW5jcnlwdGlvbjogbm9uZQpQYXltZW50LUlkOiAxMTBlYzU4YS1hMGYyLTRhYzQtODM5My1jODY2ZDgxM2I4ZDEKCkV4cGlyZXMtQXQ6IDIwMTctMDYtMjBUMDA6MDA6MDEuMDAwWgoKAA==",(String)response.jsonPath().get("ipr"));
+		assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
+		
+	}
+	
+	@Test
+	@Ignore
+	public void testHealth() throws Exception {
+		
+		String healthMockResponseJson = loadResourceAsString("test_data/healthMockResponse.json");
+		dfspAPIService.stubFor(get(urlPathMatching("/health")).willReturn(aResponse().withBody(healthMockResponseJson)));
+    	
+		given().
+    		contentType("application/json").
+    	when().
+        	get("http://localhost:8088/scheme/adapter/v1/health").
+        then().
+        	statusCode(200).
+        	body("status", equalTo("ok"));
 		
 	}
 

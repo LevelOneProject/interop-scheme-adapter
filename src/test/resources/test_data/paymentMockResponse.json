@@ -1,0 +1,7 @@
+{
+  "paymentId" : "123456",
+  "connectorAccount" : "123456",
+  "status" : "1",
+  "rejectionMessage" : "rejection message",
+  "fulfillment" : "fulfillment"
+}

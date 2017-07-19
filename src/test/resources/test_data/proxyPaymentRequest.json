@@ -1,0 +1,7 @@
+{
+  "ipr" : "123456",
+  "sourceAmount" : "123.12",
+  "sourceAccount" : "123456",
+  "connectorAccount" : "123456",
+  "sourceExpiryDuration" : "30"
+}
