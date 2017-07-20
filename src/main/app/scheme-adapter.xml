@@ -367,9 +367,29 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
         <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/notifications" allowedMethods="POST" doc:name="HTTP"/>
         <flow-ref name="common-flow" doc:name="common-flow"/>
+        <json:json-to-object-transformer doc:name="Convert payload to Map"
+                                         returnClass="java.util.HashMap" />
+        <set-variable variableName="paymentId" value="#[payload.paymentId]"/>
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
-		<set-property propertyName="http.status" value="200" doc:name="Property"/>
-		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
+		<logger level="INFO"
+                message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT"
+                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.start" doc:name="SnapTime"/>
+        <http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"
+                      doc:name="Call dfsp-api /payments/{paymentId}">
+            <http:request-builder>
+                <http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
+                <http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />
+            </http:request-builder>
+            <http:success-status-code-validator values="200..599" />
+        </http:request>
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.stop" doc:name="SnapTime"/>
+        <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-update-prepare.start" endSnapKey="post.dfsp-update-prepare.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>
+        <logger level="INFO"
+                message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"
+                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
+        <set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>
+        <exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
 	<sub-flow name="dfsp_quote-and-ilpservice_createIPR">
