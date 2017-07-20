@@ -1,5 +1,14 @@
 package com.l1p.interop.scheme.adapter;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -8,23 +17,24 @@ import org.mule.tck.junit4.FunctionalTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import io.restassured.response.Response;
-import static io.restassured.RestAssured.given;
-import static org.junit.Assert.assertEquals;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.hamcrest.CoreMatchers.equalTo;
 
 public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	protected Logger logger = LoggerFactory.getLogger(getClass());
+	private static WireMockServer wireMockServer;
 	
 	@Rule
 	public WireMockRule mockReceiverSchemeAdapter = new WireMockRule(8090);
 	
 	@Rule
     public WireMockRule dfspAPIService = new WireMockRule(8010);
+	
+	@Rule
+	public WireMockRule interopService = new WireMockRule(8088);
 	
 	@Rule
     public WireMockRule dfspQuoteService = new WireMockRule(8020);
@@ -117,12 +127,12 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 	
 	@Test
-	@Ignore
 	public void testPayments() throws Exception {
-		
-		//TODO: update this method copied from testQuotes() for testPayments()
+
+		String proxyPaymentRequestJson = loadResourceAsString("test_data/proxyPaymentRequest.json");
 		String paymentMockResponseJson = loadResourceAsString("test_data/paymentMockResponse.json");
-		dfspQuoteService.stubFor(post(urlMatching("/v1/payments")).willReturn(aResponse().withBody(paymentMockResponseJson)));
+		interopService.stubFor(post(urlMatching("/payments.*")).willReturn(aResponse().withBody(paymentMockResponseJson).withStatus(201)).atPriority(2));
+
 		
 /*      //From testQuotes() method
  		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
@@ -133,13 +143,16 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 		
 */
 		
-		String proxyPaymentRequestJson = loadResourceAsString("test_data/proxyPaymentRequest.json");
+		System.out.println("**** About to post payment under test *****");
 		Response response =
         	given().
             	contentType("application/json").
             	body(proxyPaymentRequestJson).
             when().
             	post("http://localhost:8088/scheme/adapter/v1/payments");
+		
+		
+		System.out.println("****** Returned from post payments :: Response = " + response.asString());
 		
 		logger.info("Response: "+response.asString());
 		
@@ -153,15 +166,14 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	}
 
 	@Test
-	@Ignore
 	public void testIlpAddress() throws Exception {
-		
+
 		String ilpAddressResponseJson = loadResourceAsString("test_data/ilpAddressMockResponse.json");
-		dfspAPIService.stubFor(get(urlPathMatching("/ilpAddress/.*")).willReturn(aResponse().withBody(ilpAddressResponseJson)));
+		ilpService.stubFor(get(urlMatching("/ilpAddress.*")).willReturn(aResponse().withBody(ilpAddressResponseJson).withStatus(200)));
     	
 		given().
     		contentType("application/json").
-    		queryParam("account", "123456").
+    		queryParam("account", "123459").
     	when().
         	get("http://localhost:8088/scheme/adapter/v1/ilpAddress").
         then().
