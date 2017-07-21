@@ -102,6 +102,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			<when expression="#[payload.amountType == 'RECEIVE']">
 				<choice doc:name="Check for initiator PAYER/PROXY">
 					<when expression="#[message.inboundProperties.'initiator'== null]">
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.start" doc:name="SnapTime"/>
 						<set-session-variable variableName="payeeUrl" value="#[payload.payee.url]"
 							doc:name="Save Input Receiver URL" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
@@ -109,10 +110,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
-						<!--<outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"-->
-							<!--exchange-pattern="request-response" doc:name="Call scheme-adapter /quotes" />-->
-                        <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]"/>
+						<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
+                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
                             <http:request-builder>
@@ -157,9 +156,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,payload.sourceAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   sessionVars.finalResponseMap.put(&quot;receiveAmount&quot;,receiveAmountMap); sessionVars.finalResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.finalResponseMap.put(&quot;connectorAccount&quot;,payload.connectorAccount); sessionVars.finalResponseMap]"
 											doc:name="Update dfsp response with quoteIPR response" />
 										<json:object-to-json-transformer doc:name="Object to JSON" />
+                                        <transformer ref="ledgerAdapterToActualLedgerUrlTransformer" doc:name="Transform Ledger URL"/>
 										<logger level="INFO"
 											message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.stop" doc:name="SnapTime"/>
+                                        <metrics:time config-ref="metricsConfig" beginSnapKey="post.interop-quotes.start" endSnapKey="post.interop-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayerPostQuoteTotalTime" doc:name="Metrics Record"/>
 									</when>
 									<otherwise>
 										<logger level="INFO"
@@ -207,7 +209,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.start" doc:name="SnapTime"/>
-                        <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/ilpAddress')]"/>
+                        <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/ilpAddress')]" doc:name="Variable"/>
                         <!-- Call payee /ilpAddress -->
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="GET" doc:name="Call Payee scheme adapter /ilpAddress">
@@ -269,7 +271,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<logger level="INFO"
 											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-										<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]"/>
+										<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
                                             <http:request-builder>
@@ -377,8 +379,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
         <json:json-to-object-transformer doc:name="Convert payload to Map"
                                          returnClass="java.util.HashMap" />
-        <set-variable variableName="paymentId" value="#[payload.paymentId]"/>
-		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
+        <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
+		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;}]" doc:name="Set Payload" />
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
@@ -522,7 +524,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
 				<!--<http:outbound-endpoint address="http://#[sessionVars.receiverUrl]"-->
 					<!--method="POST" exchange-pattern="request-response" doc:name="Generic" />-->
-                <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.receiverUrl)]"/>
+                <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.receiverUrl)]" doc:name="Variable"/>
                 <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                               method="POST" doc:name="Call Payee scheme adapter /invoices">
                     <http:request-builder>
@@ -540,7 +542,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<logger level="INFO"
 					message="Sending request to dfsp at http://${dfsp-host}:${dfsp-api.port}/invoices Payload:#[payload] with Authorization: #['Basic ']${dfsp-api.auth_value}"
 					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
-				<object-to-string-transformer mimeType="application/json"/>
+				<object-to-string-transformer mimeType="application/json" doc:name="Object to String"/>
                 <http:request config-ref="dfsp-api-http-config" path="/invoices" method="POST"
 					doc:name="HTTP">
 					<http:request-builder>
@@ -609,7 +611,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			variableName="invoiceUrl" doc:name="Session Variable" />
 		<!--<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]"-->
 			<!--method="GET" exchange-pattern="request-response" doc:name="Generic" />-->
-        <set-variable variableName="dynamicURL" value="#[new URL('http://' + message.inboundProperties.'http.query.params'.invoiceUrl)]"/>
+        <set-variable variableName="dynamicURL" value="#[new URL('http://' + message.inboundProperties.'http.query.params'.invoiceUrl)]" doc:name="Variable"/>
         <logger level="INFO"
                 message="Sending request to get:#[flowVars.dynamicURL.getHost()]:#[flowVars.dynamicURL.getPort()]/#[flowVars.dynamicURL.getPath()], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
                 category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />

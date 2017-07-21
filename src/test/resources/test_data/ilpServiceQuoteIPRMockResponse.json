@@ -1,5 +1,5 @@
 {
   "sourceAmount": "10",
-  "connectorAccount": "http://ec2-52-32-130-4.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/alice",
+  "connectorAccount": "http://ec2-52-32-130-4.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/dfsp1-testconnector",
   "sourceExpiryDuration": 10
 }

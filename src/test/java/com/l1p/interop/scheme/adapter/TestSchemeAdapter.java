@@ -91,7 +91,8 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 		assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
 	    assertEquals("payeeCommission","1",(String)response.jsonPath().get("payeeCommission.amount"));
 	    assertEquals("ipr","Aojf9Pq9_RKgnS3mzvYnZAXvJuvjWnw6r-JXdwitLmHygdQBgdEAAAAAAAAEsDZsZXZlbG9uZS5kZnNwMS5hbGljZS5TdXVPNUdhaDUxSXM3VzVyUkdXdVBnTWVSdGtKOXZPelGBj1BTSy8xLjAKTm9uY2U6IHRsNF93NVRfaGhLM0FFcWJ3Ukg3VVEKRW5jcnlwdGlvbjogbm9uZQpQYXltZW50LUlkOiAxMTBlYzU4YS1hMGYyLTRhYzQtODM5My1jODY2ZDgxM2I4ZDEKCkV4cGlyZXMtQXQ6IDIwMTctMDYtMjBUMDA6MDA6MDEuMDAwWgoKAA==",(String)response.jsonPath().get("ipr"));
-		assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
+		assertEquals("connectorAccount","http://ec2-52-32-130-4.us-west-2.compute.amazonaws.com:8088/ilp/ledger/v1/accounts/dfsp1-testconnector",(String)response.jsonPath().get("connectorAccount"));
+	    assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
 	}
 	
 	@Test
