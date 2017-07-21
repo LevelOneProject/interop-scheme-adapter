@@ -118,6 +118,7 @@ This endpoint allows a DFSP to request for a quote.
 | payeeCommission | Object | Payee Commission Object |
 | payeeCommission.amount | number | Amount  |
 | payeeCommission.currency | String | defaulted to "USD" |
+| connectorAccount | String | Ledger account URI of the connector through which this payment can be sent. |
 | ipr | String | Interledger Payment Request |
 | sourceExpiryDuration | number | Number of seconds after the payment is submitted that the outgoing transfer will expire. |
 
@@ -168,6 +169,7 @@ Content-Type: application/json
         "amount": "1",
         "currency": "USD"
       },
+      "connectorAccount":"http://host:port/scheme/adapter/v1/ilp/ledger/v1/accounts/dfsp1-testconnector",
       "ipr": "c29tZSBpcHIgaGVyZQ==",
       "sourceExpiryDuration": "10"
   }
