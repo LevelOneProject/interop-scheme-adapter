@@ -33,6 +33,22 @@ http://www.mulesoft.org/schema/mule/metrics http://www.mulesoft.org/schema/mule/
       </spring:property>
     </spring:bean>
 
+    <spring:bean id="ledgerAdapterToActualLedgerUrlTransformer"
+                 class="com.l1p.interop.LedgerAdatperToActualLedgerUrlTransformer">
+        <spring:property name="ledgerUrlMapper" ref="ledgerUrlMapper" />
+        <spring:property name="urlFields">
+            <spring:list>
+                <spring:value>id</spring:value>
+                <spring:value>ledger</spring:value>
+                <spring:value>debits.account</spring:value>
+                <spring:value>credits.account</spring:value>
+                <spring:value>sourceAccount</spring:value>
+                <spring:value>account</spring:value>
+                <spring:value>connectorAccount</spring:value>
+            </spring:list>
+        </spring:property>
+    </spring:bean>
+
     <spring:bean id="ledgerUrlMapper" class="com.l1p.interop.ilp.ledger.LedgerUrlMapper">
       <!-- Going from dfsp/actual ledger to adapter -->
       <spring:constructor-arg value="${ilp-ledger.url.replacement.regex}"/>

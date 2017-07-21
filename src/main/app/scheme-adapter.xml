@@ -380,9 +380,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <json:json-to-object-transformer doc:name="Convert payload to Map"
                                          returnClass="java.util.HashMap" />
         <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
-		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;}]" doc:name="Set Payload" />
+		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;}]" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
-                message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT"
+                message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.start" doc:name="SnapTime"/>
         <http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"
