@@ -134,9 +134,10 @@ Content-Type: application/json
      "identifierType": "eur"
    },
    "payee": {
-     "url": "http://payee-dfsp-scheme-adaptor-baseUrl",
      "identifier": "30754016",
      "identifierType": "eur",
+     "url": "ec2-34-194-186-111.compute-1.amazonaws.com:8088/scheme/adapter/v1",
+     "account": "http://ec2-34-194-186-111.compute-1.amazonaws.com:8088/ilp/ledger/v1/accounts/alice"
    },
    "transferType": "p2p",
    "amountType": "SEND",
@@ -169,7 +170,7 @@ Content-Type: application/json
         "amount": "1",
         "currency": "USD"
       },
-      "connectorAccount":"http://host:port/scheme/adapter/v1/ilp/ledger/v1/accounts/dfsp1-testconnector",
+      "connectorAccount":"http://host:port/scheme/adapter/v1/ilp/ledger/v1/accounts/connector-account",
       "ipr": "c29tZSBpcHIgaGVyZQ==",
       "sourceExpiryDuration": "10"
   }

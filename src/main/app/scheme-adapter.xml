@@ -154,7 +154,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<json:json-to-object-transformer doc:name="Convert ILP-Service quoteIPR response to Map"
 											returnClass="java.util.HashMap" />
 										<expression-transformer
-											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,payload.sourceAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   sessionVars.finalResponseMap.put(&quot;receiveAmount&quot;,receiveAmountMap); sessionVars.finalResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.finalResponseMap]"
+											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,payload.sourceAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   sessionVars.finalResponseMap.put(&quot;receiveAmount&quot;,receiveAmountMap); sessionVars.finalResponseMap.put(&quot;sourceExpiryDuration&quot;,payload.sourceExpiryDuration); sessionVars.finalResponseMap.put(&quot;connectorAccount&quot;,payload.connectorAccount); sessionVars.finalResponseMap]"
 											doc:name="Update dfsp response with quoteIPR response" />
 										<json:object-to-json-transformer doc:name="Object to JSON" />
 										<logger level="INFO"
@@ -207,10 +207,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.start" doc:name="SnapTime"/>
-                        <!--<http:outbound-endpoint-->
-							<!--address="http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount]"-->
-							<!--method="GET" exchange-pattern="request-response" doc:name="Generic" />-->
                         <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/ilpAddress')]"/>
+                        <!-- Call payee /ilpAddress -->
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="GET" doc:name="Call Payee scheme adapter /ilpAddress">
                             <http:request-builder>
@@ -241,7 +239,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<http:query-param paramName="destinationAddress" value="#[sessionVars.ilpAddress]" />
 										<http:query-param paramName="sourceAmount"
 											value="#[sessionVars.originalQuoteRequestMap.amount.amount]" />
-										<http:query-param paramName="connectorAccount" value="#[sessionVars.payeeLedgerAccount]" />
+										<!--<http:query-param paramName="connectorAccount" value="#[sessionVars.payeeLedgerAccount]" />-->
 										<http:query-param paramName="destinationScale" value="1" />
                                         <http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />
 									</http:request-builder>
@@ -260,6 +258,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 											doc:name="Save destination amount" />
 										<set-session-variable variableName="sourceExpiryDuration" value="#[payload.sourceExpiryDuration]"
 											doc:name="Save sourceExpiryDuration" />
+                                        <set-session-variable variableName="connectorAccount" value="#[payload.connectorAccount]"
+                                                              doc:name="Save connectorAccount" />
 										<!-- Call /quotes on scheme adapter on Payee side -->
 										<expression-transformer
 											expression="#[sessionVars.originalQuoteRequestMap.get(&quot;amount&quot;).put(&quot;amount&quot;,sessionVars.destinationAmount);  sessionVars.originalQuoteRequestMap]"
@@ -269,9 +269,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<logger level="INFO"
 											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-										<!--<http:outbound-endpoint address="http://#[sessionVars.payeeUrl]/quotes"-->
-											<!--method="POST" exchange-pattern="request-response" doc:name="Generic" />-->
-                                        <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]"/>
+										<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]"/>
                                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
                                             <http:request-builder>
@@ -289,7 +287,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<set-session-variable variableName="receiveAmount"
 											value="#[String.valueOf(Integer.parseInt(sessionVars.inputAmount))]" doc:name="Calculate reeiveAmount that scheme-adapter needs to send to Payer dfsp" />
 										<expression-transformer
-											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,sessionVars.receiveAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   payload.put(&quot;receiveAmount&quot;,receiveAmountMap); payload]"
+											expression="#[Map receiveAmountMap = new java.util.HashMap(); receiveAmountMap.put(&quot;amount&quot;,sessionVars.receiveAmount); receiveAmountMap.put(&quot;currency&quot;,&quot;USD&quot;);   payload.put(&quot;receiveAmount&quot;,receiveAmountMap); payload.put(&quot;connectorAccount&quot;,sessionVars.connectorAccount); payload]"
 											doc:name="Update dfsp response with quoteIPR response" />
 										<json:object-to-json-transformer doc:name="Object to JSON" />
                                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.stop" doc:name="SnapTime"/>
@@ -373,30 +371,33 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
         <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/notifications" allowedMethods="POST" doc:name="HTTP"/>
         <flow-ref name="common-flow" doc:name="common-flow"/>
-        <!--<json:json-to-object-transformer doc:name="Convert payload to Map"-->
-                                         <!--returnClass="java.util.HashMap" />-->
-        <!--<set-variable variableName="paymentId" value="#[payload.paymentId]"/>-->
-		<!--<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />-->
-		<!--<logger level="INFO"-->
-                <!--message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT"-->
-                <!--category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />-->
-        <!--<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.start" doc:name="SnapTime"/>-->
-        <!--<http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"-->
-                      <!--doc:name="Call dfsp-api /payments/{paymentId}">-->
-            <!--<http:request-builder>-->
-                <!--<http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />-->
-                <!--<http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />-->
-            <!--</http:request-builder>-->
-            <!--<http:success-status-code-validator values="200..599" />-->
-        <!--</http:request>-->
-        <!--<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.stop" doc:name="SnapTime"/>-->
-        <!--<metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-update-prepare.start" endSnapKey="post.dfsp-update-prepare.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>-->
-        <!--<logger level="INFO"-->
-                <!--message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"-->
-                <!--category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />-->
+
+        <!--<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />-->
         <!--<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>-->
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
+
+        <json:json-to-object-transformer doc:name="Convert payload to Map"
+                                         returnClass="java.util.HashMap" />
+        <set-variable variableName="paymentId" value="#[payload.paymentId]"/>
+		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
+		<logger level="INFO"
+                message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT"
+                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.start" doc:name="SnapTime"/>
+        <http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"
+                      doc:name="Call dfsp-api /payments/{paymentId}">
+            <http:request-builder>
+                <http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
+                <http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />
+            </http:request-builder>
+            <http:success-status-code-validator values="200..599" />
+        </http:request>
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.stop" doc:name="SnapTime"/>
+        <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-update-prepare.start" endSnapKey="post.dfsp-update-prepare.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>
+        <logger level="INFO"
+                message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"
+                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
         <set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>
+
         <exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
