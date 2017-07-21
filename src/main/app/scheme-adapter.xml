@@ -93,7 +93,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<set-session-variable variableName="payeeUrl" value="#[payload.payee.url]"
 							doc:name="Save Input Receiver URL" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
-						<set-property propertyName="initiator" value="PROXY"></set-property>
+						<set-property propertyName="initiator" value="PROXY" doc:name="Property"></set-property>
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
@@ -218,7 +218,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 											expression="#[sessionVars.originalQuoteRequestMap.get(&quot;amount&quot;).put(&quot;amount&quot;,sessionVars.destinationAmount);  sessionVars.originalQuoteRequestMap]"
 											doc:name="Update dfsp request with destination amount from ilp-service /quoteSourceAmount" />
 										<json:object-to-json-transformer doc:name="Object to JSON" />
-										<set-property propertyName="initiator" value="PROXY"></set-property>
+										<set-property propertyName="initiator" value="PROXY" doc:name="Property"></set-property>
 										<logger level="INFO"
 											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
@@ -302,6 +302,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<object-to-string-transformer doc:name="Object to String" />
 	</flow>
 	<flow name="post:/notifications:application/json:scheme-adapter-config">
+        <logger message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/notifications, method=POST Payload: #[payload]" level="INFO" category="com.l1p.interop.scheme.adapter.quote" doc:name="logger"/>
 		<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
 	</flow>
 

@@ -34,9 +34,6 @@ public class TestSchemeAdapter extends FunctionalTestCase {
     public WireMockRule dfspAPIService = new WireMockRule(8010);
 	
 	@Rule
-	public WireMockRule interopService = new WireMockRule(8088);
-	
-	@Rule
     public WireMockRule dfspQuoteService = new WireMockRule(8020);
 	
 	@Rule
@@ -126,34 +123,22 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 		assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
 	}
 	
+	
 	@Test
 	public void testPayments() throws Exception {
 
 		String proxyPaymentRequestJson = loadResourceAsString("test_data/proxyPaymentRequest.json");
 		String paymentMockResponseJson = loadResourceAsString("test_data/paymentMockResponse.json");
-		interopService.stubFor(post(urlMatching("/payments.*")).willReturn(aResponse().withBody(paymentMockResponseJson).withStatus(201)).atPriority(2));
-
 		
-/*      //From testQuotes() method
- 		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
-		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
-
-		String ilpServiceMockQuoteIPRMockJson = loadResourceAsString("test_data/ilpServiceQuoteIPRMockResponse.json");
-		ilpService.stubFor(get(urlPathMatching("/quoteIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockQuoteIPRMockJson)));
+		ilpService.stubFor(post(urlMatching("/payIPR")).willReturn(aResponse().withBody(paymentMockResponseJson).withStatus(201)).atPriority(2));
 		
-*/
-		
-		System.out.println("**** About to post payment under test *****");
 		Response response =
         	given().
             	contentType("application/json").
             	body(proxyPaymentRequestJson).
             when().
             	post("http://localhost:8088/scheme/adapter/v1/payments");
-		
-		
-		System.out.println("****** Returned from post payments :: Response = " + response.asString());
-		
+				
 		logger.info("Response: "+response.asString());
 		
 	    assertEquals("paymentId","123456",(String)response.jsonPath().get("paymentId"));
@@ -162,9 +147,9 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	    assertEquals("rejectionMessage","rejection message",(String)response.jsonPath().get("rejectionMessage"));
 		assertEquals("fulfillment","fulfillment",(String)response.jsonPath().get("fulfillment"));
 		
-		
 	}
 
+	
 	@Test
 	public void testIlpAddress() throws Exception {
 
@@ -184,39 +169,22 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	
 	@Test
-	@Ignore
 	public void testNotifications() throws Exception {
 		
-		//TODO: update this method copied from testQuotes() for testNotifications()
-		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteMockResponse.json");
-		dfspQuoteService.stubFor(post(urlMatching("/v1/quote")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
-		
-		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
-		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));
+		String notificationRequestBodyJson = loadResourceAsString("test_data/notificationMockRequestBody.json");
 
-		String ilpServiceMockQuoteIPRMockJson = loadResourceAsString("test_data/ilpServiceQuoteIPRMockResponse.json");
-		ilpService.stubFor(get(urlPathMatching("/quoteIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockQuoteIPRMockJson)));
-		
-		String proxyQuoteRequestJson = loadResourceAsString("test_data/proxyQuoteRequest.json");
-		Response response =
-        	given().
-            	contentType("application/json").
-            	body(proxyQuoteRequestJson).
-            when().
-            	post("http://localhost:8088/scheme/adapter/v1/quotes");
-		
-		logger.info("Response: "+response.asString());
-		
-	    assertEquals("receiveAmount","10",(String)response.jsonPath().get("receiveAmount.amount"));
-		assertEquals("payeeFee","1",(String)response.jsonPath().get("payeeFee.amount"));
-	    assertEquals("payeeCommission","1",(String)response.jsonPath().get("payeeCommission.amount"));
-	    assertEquals("ipr","Aojf9Pq9_RKgnS3mzvYnZAXvJuvjWnw6r-JXdwitLmHygdQBgdEAAAAAAAAEsDZsZXZlbG9uZS5kZnNwMS5hbGljZS5TdXVPNUdhaDUxSXM3VzVyUkdXdVBnTWVSdGtKOXZPelGBj1BTSy8xLjAKTm9uY2U6IHRsNF93NVRfaGhLM0FFcWJ3Ukg3VVEKRW5jcnlwdGlvbjogbm9uZQpQYXltZW50LUlkOiAxMTBlYzU4YS1hMGYyLTRhYzQtODM5My1jODY2ZDgxM2I4ZDEKCkV4cGlyZXMtQXQ6IDIwMTctMDYtMjBUMDA6MDA6MDEuMDAwWgoKAA==",(String)response.jsonPath().get("ipr"));
-		assertEquals("expiresAt","2017-06-14T00:00:01.000Z",(String)response.jsonPath().get("expiresAt"));
-		
+    	given().
+        	contentType("application/json").
+        	body(notificationRequestBodyJson).
+        when().
+        	post("http://localhost:8088/scheme/adapter/v1/notifications").
+        then().
+        	statusCode(200);
+
 	}
 	
+	
 	@Test
-	@Ignore
 	public void testHealth() throws Exception {
 		
 		String healthMockResponseJson = loadResourceAsString("test_data/healthMockResponse.json");
