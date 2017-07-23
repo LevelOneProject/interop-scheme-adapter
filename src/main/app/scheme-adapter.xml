@@ -380,11 +380,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <json:json-to-object-transformer doc:name="Convert payload to Map"
                                          returnClass="java.util.HashMap" />
         <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
-		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;}]" doc:name="Set Payload" mimeType="application/json"/>
+		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.start" doc:name="SnapTime"/>
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.start" doc:name="SnapTime"/>
         <http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"
                       doc:name="Call dfsp-api /payments/{paymentId}">
             <http:request-builder>
@@ -393,8 +393,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
             </http:request-builder>
             <http:success-status-code-validator values="200..599" />
         </http:request>
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-update-prepare.stop" doc:name="SnapTime"/>
-        <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-update-prepare.start" endSnapKey="post.dfsp-update-prepare.stop" category="l1p.scheme-adapter.quotes.api" metricKey="DFSPPostQuote" doc:name="Metrics Record"/>
+        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.stop" doc:name="SnapTime"/>
+        <metrics:time config-ref="metricsConfig" beginSnapKey="put.dfsp-notification.start" endSnapKey="put.dfsp-notification.stop" category="l1p.scheme-adapter.notification.api" metricKey="PutDFSPNotification" doc:name="Metrics Record"/>
         <logger level="INFO"
                 message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
