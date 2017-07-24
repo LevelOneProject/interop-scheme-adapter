@@ -167,6 +167,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<logger level="INFO"
 											message="Failure response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
+                                        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.stop" doc:name="SnapTime"/>
+                                        <metrics:time config-ref="metricsConfig" beginSnapKey="post.interop-quotes.start" endSnapKey="post.interop-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayerPostQuoteTotalTime" doc:name="Metrics Record"/>
 									</otherwise>
 								</choice>
 							</when>
@@ -374,31 +376,31 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/notifications" allowedMethods="POST" doc:name="HTTP"/>
         <flow-ref name="common-flow" doc:name="common-flow"/>
 
-        <!--<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />-->
-        <!--<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>-->
-
-        <json:json-to-object-transformer doc:name="Convert payload to Map"
-                                         returnClass="java.util.HashMap" />
-        <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
-		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>
-		<logger level="INFO"
-                message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
-                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.start" doc:name="SnapTime"/>
-        <http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"
-                      doc:name="Call dfsp-api /payments/{paymentId}">
-            <http:request-builder>
-                <http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />
-                <http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />
-            </http:request-builder>
-            <http:success-status-code-validator values="200..599" />
-        </http:request>
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.stop" doc:name="SnapTime"/>
-        <metrics:time config-ref="metricsConfig" beginSnapKey="put.dfsp-notification.start" endSnapKey="put.dfsp-notification.stop" category="l1p.scheme-adapter.notification.api" metricKey="PutDFSPNotification" doc:name="Metrics Record"/>
-        <logger level="INFO"
-                message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"
-                category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />
         <set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>
+
+        <!--<json:json-to-object-transformer doc:name="Convert payload to Map"-->
+                                         <!--returnClass="java.util.HashMap" />-->
+        <!--<set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>-->
+		<!--<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>-->
+		<!--<logger level="INFO"-->
+                <!--message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"-->
+                <!--category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />-->
+        <!--<metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.start" doc:name="SnapTime"/>-->
+        <!--<http:request config-ref="dfsp-api-http-config" path="/payments/#[flowVars.paymentId]" method="PUT"-->
+                      <!--doc:name="Call dfsp-api /payments/{paymentId}">-->
+            <!--<http:request-builder>-->
+                <!--<http:header headerName="Authorization" value="#['Basic ']${dfsp-api.auth_value}" />-->
+                <!--<http:header headerName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']" />-->
+            <!--</http:request-builder>-->
+            <!--<http:success-status-code-validator values="200..599" />-->
+        <!--</http:request>-->
+        <!--<metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.stop" doc:name="SnapTime"/>-->
+        <!--<metrics:time config-ref="metricsConfig" beginSnapKey="put.dfsp-notification.start" endSnapKey="put.dfsp-notification.stop" category="l1p.scheme-adapter.notification.api" metricKey="PutDFSPNotification" doc:name="Metrics Record"/>-->
+        <!--<logger level="INFO"-->
+                <!--message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status']"-->
+                <!--category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />-->
+        <!--<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>-->
 
         <exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
