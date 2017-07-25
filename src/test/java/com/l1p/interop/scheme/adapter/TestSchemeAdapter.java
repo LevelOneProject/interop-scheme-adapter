@@ -38,6 +38,9 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	
 	@Rule
     public WireMockRule ilpService = new WireMockRule(3045);
+
+	@Rule
+	public WireMockRule notificationsService = new WireMockRule(8088);
 	
 	
 	@Override
@@ -172,7 +175,8 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	public void testNotifications() throws Exception {
 		
 		String notificationRequestBodyJson = loadResourceAsString("test_data/notificationMockRequestBody.json");
-
+		notificationsService.stubFor(post(urlPathMatching("/scheme/adapter/v1/notifications")).willReturn(aResponse().withStatus(200)));
+		
     	given().
         	contentType("application/json").
         	body(notificationRequestBodyJson).
