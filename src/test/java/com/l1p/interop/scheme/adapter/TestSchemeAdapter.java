@@ -175,7 +175,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	public void testNotifications() throws Exception {
 		
 		String notificationRequestBodyJson = loadResourceAsString("test_data/notificationMockRequestBody.json");
-		notificationsService.stubFor(post(urlPathMatching("/scheme/adapter/v1/notifications")).willReturn(aResponse().withStatus(200)));
+		notificationsService.stubFor(post(urlPathMatching("/scheme/adapter/v1/notificationsXXX")).willReturn(aResponse().withStatus(500)));
 		
     	given().
         	contentType("application/json").
