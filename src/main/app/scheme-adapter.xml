@@ -32,6 +32,10 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<spring:bean id="ExceptionTransformer" name="ExceptionTransformer" class="com.l1p.interop.L1PExceptionTransformer"/>
 	</spring:beans>
 
+	<spring:beans>
+		<spring:bean id="utils" name="utils" class="com.l1p.interop.util.Utils"/>
+	</spring:beans>
+
 	<sub-flow name="common-flow">
         <set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'L1p-Trace-Id' == null) ? java.util.UUID.randomUUID() : message.inboundProperties.'L1p-Trace-Id']" doc:name="set-L1p-Trace-Id"/>
 		<!-- <custom-transformer class="com.l1p.interop.ilp.ledger.BasicAuthCredentialsTransformer" doc:name="Basic Auth Transformer"/> -->
@@ -430,8 +434,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			<!--<http:success-status-code-validator values="200..599" />-->
 		<!--</http:request>-->
 		<set-payload value="{&quot;paymentId&quot;:&quot;013d95f6-2699-43a0-ac96-ad7d0f905084&quot;,&quot;expiresAt&quot;:&quot;2017-07-24T13:27:14.822Z&quot;,&quot;payeeFee&quot;:{&quot;amount&quot;:&quot;0&quot;,&quot;currency&quot;:&quot;USD&quot;},&quot;payeeCommission&quot;:{&quot;amount&quot;:&quot;0&quot;,&quot;currency&quot;:&quot;USD&quot;}}" doc:name="Set Payload"/>
-		<set-property propertyName="http.status" value="200" doc:name="200 Status" />
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
+		<expression-component doc:name="Expression"><![CDATA[flowVars.expiresAt = app.registry.utils.getExpiresAt()]]></expression-component>
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
         <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-quotes.start" endSnapKey="post.dfsp-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayeeDFSPPostQuoteTime" doc:name="Metrics Record"/>
 		<choice doc:name="Check if dfsp-api /quote call is success/failure">
 			<!--<when expression="#[message.inboundProperties.'http.status' == 200]">-->
@@ -465,7 +469,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<set-session-variable variableName="createIPRRequestMap" value="#[new java.util.HashMap()]"
 					doc:name="Instantiate empty createIPR Request" />
 				<expression-transformer
-					expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]"
+					expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,flowVars.expiresAt); sessionVars.createIPRRequestMap]"
 					doc:name="Populate createIPR Request" />
 				<!-- <set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload> -->
 				<json:object-to-json-transformer doc:name="Object to JSON" />
@@ -488,7 +492,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<json:json-to-object-transformer doc:name="Convert ILP-Service Response to Map"
 					returnClass="java.util.HashMap" />
 				<expression-transformer
-					expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.dfspQuoteResponseMap]"
+					expression="#[sessionVars.dfspQuoteResponseMap.put(&quot;ipr&quot;,payload.ipr); sessionVars.dfspQuoteResponseMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.dfspQuoteResponseMap.put(&quot;expiresAt&quot;,flowVars.expiresAt); sessionVars.dfspQuoteResponseMap]"
 					doc:name="Update dfsp response with createIPR response" />
 				<json:object-to-json-transformer doc:name="Object to JSON" />
 				<set-property propertyName="http.status" value="#[200]" doc:name="200 Status" />
