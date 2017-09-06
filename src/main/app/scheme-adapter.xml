@@ -110,7 +110,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
+						<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
@@ -211,7 +211,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.start" doc:name="SnapTime"/>
-                        <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/ilpAddress')]" doc:name="Variable"/>
+                        <set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/ilpAddress')]" doc:name="Variable"/>
                         <!-- Call payee /ilpAddress -->
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="GET" doc:name="Call Payee scheme adapter /ilpAddress">
@@ -273,7 +273,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<logger level="INFO"
 											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-										<set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
+										<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
                                             <http:request-builder>
@@ -533,7 +533,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
 				<!--<http:outbound-endpoint address="http://#[sessionVars.receiverUrl]"-->
 					<!--method="POST" exchange-pattern="request-response" doc:name="Generic" />-->
-                <set-variable variableName="dynamicURL" value="#[new URL('http://' + sessionVars.receiverUrl)]" doc:name="Variable"/>
+                <set-variable variableName="dynamicURL" value="#[new URL(sessionVars.receiverUrl)]" doc:name="Variable"/>
                 <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                               method="POST" doc:name="Call Payee scheme adapter /invoices">
                     <http:request-builder>
@@ -620,7 +620,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			variableName="invoiceUrl" doc:name="Session Variable" />
 		<!--<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]"-->
 			<!--method="GET" exchange-pattern="request-response" doc:name="Generic" />-->
-        <set-variable variableName="dynamicURL" value="#[new URL('http://' + message.inboundProperties.'http.query.params'.invoiceUrl)]" doc:name="Variable"/>
+        <set-variable variableName="dynamicURL" value="#[new URL(message.inboundProperties.'http.query.params'.invoiceUrl)]" doc:name="Variable"/>
         <logger level="INFO"
                 message="Sending request to get:#[flowVars.dynamicURL.getHost()]:#[flowVars.dynamicURL.getPort()]/#[flowVars.dynamicURL.getPath()], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
                 category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
