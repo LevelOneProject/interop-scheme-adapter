@@ -69,7 +69,7 @@ public class TestSchemeAdapter extends FunctionalTestCase {
 	@Test
 	public void testQuotes() throws Exception {
 		String dfspQuoteResponseJson = loadResourceAsString("test_data/dfspQuoteMockResponse.json");
-		dfspAPIService.stubFor(post(urlMatching("/quotes")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
+		dfspAPIService.stubFor(post(urlMatching("/scheme/adapter/v1/quotes")).willReturn(aResponse().withBody(dfspQuoteResponseJson)));
 		
 		String ilpServiceMockCreateIPRMockJson = loadResourceAsString("test_data/ilpServiceCreateIPRMockResponse.json");
 		ilpService.stubFor(post(urlMatching("/createIPR")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(ilpServiceMockCreateIPRMockJson)));

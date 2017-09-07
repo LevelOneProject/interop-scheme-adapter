@@ -110,7 +110,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<logger level="INFO"
 							message="Posting request to payee scheme-adapter /quotes to #[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<set-variable variableName="dynamicURL" value="#[new URL('http://'+sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
+						<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
