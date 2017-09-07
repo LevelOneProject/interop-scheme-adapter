@@ -382,9 +382,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <json:json-to-object-transformer doc:name="Convert payload to Map"
                                          returnClass="java.util.HashMap" />
         <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
-		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>
-		<!--<set-variable variableName="data" value="#[payload.data]" doc:name="Variable"/>-->
-		<!--<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:&quot;flowVars.data&quot;}]" doc:name="Set Payload" mimeType="application/json"/>-->
+		<!--<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>-->
+		<set-variable variableName="data" value="#[payload.data]" doc:name="Variable"/>
+		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:&quot;flowVars.data&quot;}]" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
@@ -467,12 +467,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				</choice>
 				<set-session-variable variableName="createIPRRequestMap" value="#[new java.util.HashMap()]"
 					doc:name="Instantiate empty createIPR Request" />
-				<expression-transformer
-						expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]"
-						doc:name="Populate createIPR Request" />
 				<!--<expression-transformer-->
-					<!--expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap.put(&quot;data&quot;,sessionVars.dfspQuoteResponseString); sessionVars.createIPRRequestMap]"-->
-					<!--doc:name="Populate createIPR Request" />-->
+						<!--expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]"-->
+						<!--doc:name="Populate createIPR Request" />-->
+				<expression-transformer
+					expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap.put(&quot;data&quot;,sessionVars.dfspQuoteResponseString); sessionVars.createIPRRequestMap]"
+					doc:name="Populate createIPR Request" />
 				<!-- <set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload> -->
 				<json:object-to-json-transformer doc:name="Object to JSON" />
 				<logger level="INFO"
