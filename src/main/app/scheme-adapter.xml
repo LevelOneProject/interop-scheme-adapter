@@ -108,9 +108,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<json:object-to-json-transformer doc:name="Object to JSON" />
 						<set-property propertyName="initiator" value="PROXY" doc:name="Property"/>
 						<logger level="INFO"
-							message="Posting request to payee scheme-adapter /quotes to http://#[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
+							message="Posting request to payee scheme-adapter /quotes to #[sessionVars.payeeUrl]/quotes, method=POST, Payload: #[payload]"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
-						<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
+						<set-variable variableName="dynamicURL" value="#[new URL('http://'+sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.mule-payee-scheme-adapter-quotes.start" doc:name="SnapTime"/>
                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                                       method="POST" doc:name="Call Payee scheme adapter /quotes">
@@ -208,7 +208,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 							doc:name="Save Payee ledger account" />
 						<json:object-to-json-transformer doc:name="Object to JSON" />
 						<logger level="INFO"
-							message="Posting request to scheme-adapter /ilpAddress to http://#[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
+							message="Posting request to scheme-adapter /ilpAddress to #[sessionVars.payeeUrl]/ilpAddress?account=#[sessionVars.payeeLedgerAccount], method=GET"
 							category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-getILPAddress.start" doc:name="SnapTime"/>
                         <set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/ilpAddress')]" doc:name="Variable"/>
@@ -271,7 +271,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<json:object-to-json-transformer doc:name="Object to JSON" />
 										<set-property propertyName="initiator" value="PROXY" doc:name="Property"/>
 										<logger level="INFO"
-											message="Posting request to scheme-adapter /quotes http://#[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
+											message="Posting request to scheme-adapter /quotes #[sessionVars.payeeUrl]/quotes, method=POST Payload: #[payload]"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 										<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.payeeUrl + '/quotes')]" doc:name="Variable"/>
                                         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
