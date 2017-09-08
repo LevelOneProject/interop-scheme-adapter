@@ -36,7 +36,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <set-session-variable variableName="L1p-Trace-Id" value="#[(message.inboundProperties.'L1p-Trace-Id' == null) ? java.util.UUID.randomUUID() : message.inboundProperties.'L1p-Trace-Id']" doc:name="set-L1p-Trace-Id"/>
 		<!-- <custom-transformer class="com.l1p.interop.ilp.ledger.BasicAuthCredentialsTransformer" doc:name="Basic Auth Transformer"/> -->
 		<logger level="INFO"
-				message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type']"
+				message="Received request with L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] at path=#[message.inboundProperties.'http.request.path'], method=#[message.inboundProperties.'http.method'], Content-Type=#[message.inboundProperties.'Content-Type'] Payload: #[message.payloadAs(java.lang.String)]"
 				category="com.l1p.interop.ilp.ledger.api-main" doc:name="logger"/>
 		<object-to-string-transformer doc:name="Object to String"/>
 	</sub-flow>
@@ -379,12 +379,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <!--<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />-->
         <!--<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>-->
 
-        <json:json-to-object-transformer doc:name="Convert payload to Map"
-                                         returnClass="java.util.HashMap" />
-        <set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>
+        <!--<json:json-to-object-transformer doc:name="Convert payload to Map"-->
+                                         <!--returnClass="java.util.HashMap" />-->
+        <!--<set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>-->
 		<!--<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>-->
-		<set-variable variableName="data" value="#[payload.data]" doc:name="Variable"/>
-		<set-payload value="#[{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:&quot;flowVars.data&quot;}]" doc:name="Set Payload" mimeType="application/json"/>
+		<!--<set-variable variableName="data" value="#[new String(payload.data)]" doc:name="Variable"/>-->
+
+		<set-variable variableName="paymentId" value="#[com.l1p.interop.scheme.adapter.Utils.getPaymentId(payload)]" doc:name="Variable"/>
+		<set-variable variableName="data" value="#[com.l1p.interop.scheme.adapter.Utils.getData(payload)]" doc:name="Variable"/>
+
+		<logger level="INFO" message="Flow Var paymentId: #[flowVars.paymentId] data: #[flowVars.data]" category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
+		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:&quot;#[flowVars.data]&quot;}" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
