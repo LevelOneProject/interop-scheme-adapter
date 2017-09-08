@@ -379,13 +379,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <!--<set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload" />-->
         <!--<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>-->
 
-        <!--<json:json-to-object-transformer doc:name="Convert payload to Map"-->
-                                         <!--returnClass="java.util.HashMap" />-->
-        <!--<set-variable variableName="paymentId" value="#[payload.paymentId]" doc:name="Variable"/>-->
-		<!--<set-payload value="{&quot;status&quot;:&quot;prepared&quot;}" doc:name="Set Payload" mimeType="application/json"/>-->
-		<!--<set-variable variableName="data" value="#[new String(payload.data)]" doc:name="Variable"/>-->
-
-		<set-variable variableName="paymentId" value="#[com.l1p.interop.scheme.adapter.Utils.getPaymentId(payload)]" doc:name="Variable"/>
+        <set-variable variableName="paymentId" value="#[com.l1p.interop.scheme.adapter.Utils.getPaymentId(payload)]" doc:name="Variable"/>
 		<set-variable variableName="data" value="#[com.l1p.interop.scheme.adapter.Utils.getData(payload)]" doc:name="Variable"/>
 
 		<logger level="INFO" message="Flow Var paymentId: #[flowVars.paymentId] data: #[flowVars.data]" category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
