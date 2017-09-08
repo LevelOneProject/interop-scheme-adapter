@@ -382,8 +382,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <set-variable variableName="paymentId" value="#[com.l1p.interop.scheme.adapter.Utils.getPaymentId(payload)]" doc:name="Variable"/>
 		<set-variable variableName="data" value="#[com.l1p.interop.scheme.adapter.Utils.getData(payload)]" doc:name="Variable"/>
 
-		<logger level="INFO" message="Flow Var paymentId: #[flowVars.paymentId] data: #[flowVars.data]" category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
-		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:&quot;#[flowVars.data]&quot;}" doc:name="Set Payload" mimeType="application/json"/>
+		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:#[flowVars.data]}" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload]"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
@@ -441,6 +440,10 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<set-session-variable variableName="dfspQuoteResponseString" value="#[message.payloadAs(java.lang.String)]"
 									  doc:name="save-dfsp-quote-response" />
+				<set-session-variable variableName="dfspDataNodeAsString" value="#[com.l1p.interop.scheme.adapter.Utils.getData(message.payloadAs(java.lang.String))]" doc:name="Variable"/>
+				<logger level="INFO"
+						message="dfspDataNodeAsString: #[sessionVars.dfspDataNodeAsString]"
+						category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer returnClass="java.util.Map"
 					doc:name="Convert JSON Payload to Map" />
 				<set-session-variable variableName="dfspQuoteResponseMap" value="#[payload]"
@@ -470,7 +473,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 						<!--expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap]"-->
 						<!--doc:name="Populate createIPR Request" />-->
 				<expression-transformer
-					expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap.put(&quot;data&quot;,sessionVars.dfspQuoteResponseString); sessionVars.createIPRRequestMap]"
+					expression="#[sessionVars.createIPRRequestMap.put(&quot;paymentId&quot;,sessionVars.paymentId); sessionVars.createIPRRequestMap.put(&quot;destinationAccount&quot;,sessionVars.payeeLedgerAccount); sessionVars.createIPRRequestMap.put(&quot;destinationAmount&quot;,sessionVars.destinationAmount); sessionVars.createIPRRequestMap.put(&quot;expiresAt&quot;,sessionVars.expiresAt); sessionVars.createIPRRequestMap.put(&quot;data&quot;,sessionVars.dfspDataNodeAsString); sessionVars.createIPRRequestMap]"
 					doc:name="Populate createIPR Request" />
 				<!-- <set-payload value="#[sessionVars.createIPRRequestMap]" doc:name="Set Payload"></set-payload> -->
 				<json:object-to-json-transformer doc:name="Object to JSON" />
