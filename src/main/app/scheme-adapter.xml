@@ -321,8 +321,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					doc:name="logger" />
 			</otherwise>
 		</choice>
-		<!-- <set-payload value="#[payload]" doc:name="Set Payload"/> <set-property propertyName="http.status" 
-			value="#[message.inboundProperties.'http.status']" doc:name="Property" /> -->
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
@@ -523,7 +521,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 					variableName="receiverUrl" doc:name="Session Variable"></set-session-variable>
 				<set-session-variable value="#[payload.get(&quot;invoiceId&quot;)]"
 					variableName="invoiceId" doc:name="Session Variable"></set-session-variable>
-				<set-session-variable value="${proxy-host}:${proxy-service.port}${scheme-adapter-service.basePath}/invoices/#[sessionVars.invoiceId]"
+				<set-session-variable value="http://${proxy-host}:${proxy-service.port}${scheme-adapter-service.basePath}/invoices/#[sessionVars.invoiceId]"
 					variableName="invoiceUrl" doc:name="Session Variable"></set-session-variable>
 				<expression-transformer
 					expression="#[payload.put(&quot;invoiceUrl&quot;,sessionVars.invoiceUrl); payload]"
@@ -531,11 +529,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<set-property propertyName="initiator" value="PROXY" doc:name="Property"/>
 				<json:object-to-json-transformer doc:name="Convert Map to String" />
 				<logger level="INFO"
-					message="Sending request to payee scheme-adapter at http://#[sessionVars.receiverUrl]. Payload: #[payload]"
-					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
-				<!--<http:outbound-endpoint address="http://#[sessionVars.receiverUrl]"-->
-					<!--method="POST" exchange-pattern="request-response" doc:name="Generic" />-->
-                <set-variable variableName="dynamicURL" value="#[new URL(sessionVars.receiverUrl)]" doc:name="Variable"/>
+					message="Sending request to payee scheme-adapter at #[sessionVars.receiverUrl]. Payload: #[payload]"
+					category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
+				<set-variable variableName="dynamicURL" value="#[new URL(sessionVars.receiverUrl)]" doc:name="Variable"/>
                 <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                               method="POST" doc:name="Call Payee scheme adapter /invoices">
                     <http:request-builder>
@@ -544,15 +540,15 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
                     <http:success-status-code-validator values="200..500" />
                 </http:request>
                 <logger level="INFO"
-					message="Response for POST /invoices: #[message.payloadAs(java.lang.String)]"
-					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
+					message="Response from payee scheme-adapter POST /invoices: #[message.payloadAs(java.lang.String)]"
+					category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
 				<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 					doc:name="Property" />
 			</when>
 			<when expression="#[message.inboundProperties.'initiator'== 'PROXY']">
 				<logger level="INFO"
 					message="Sending request to dfsp at http://${dfsp-host}:${dfsp-api.port}/invoices Payload:#[payload] with Authorization: #['Basic ']${dfsp-api.auth_value}"
-					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
+					category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
 				<object-to-string-transformer mimeType="application/json" doc:name="Object to String"/>
                 <http:request config-ref="dfsp-api-http-config" path="/invoices" method="POST"
 					doc:name="HTTP">
@@ -564,8 +560,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				</http:request>
 
 				<logger level="INFO"
-					message="Response from dfsp-api /invoices: #[message.payloadAs(java.lang.String)]"
-					category="com.l1p.interop.spsp-backend-invoices" doc:name="logger" />
+					message="Response from dfsp-api POST /invoices: #[message.payloadAs(java.lang.String)]"
+					category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
 				<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 					doc:name="Property" />
 			</when>
@@ -580,7 +576,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			doc:name="SnapTime" />
 		<logger level="INFO"
 			message="Sending request to GET http://${dfsp-host}:${dfsp-api.port}/invoices/#[message.inboundProperties.'http.uri.params'.invoiceId], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
-			category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
+			category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
 		<http:request config-ref="dfsp-api-http-config" path="/invoices/#[message.inboundProperties.'http.uri.params'.invoiceId]"
 			method="GET" doc:name="HTTP">
 			<http:request-builder>
@@ -603,15 +599,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 
 		<logger level="INFO"
-			message="Processing complete for get:/receivers/invoices/{invoice}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
-			category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
+			message="Processing complete for GET:/receivers/invoices/{invoiceId}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
+			category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
 		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 			doc:name="Property" />
 		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="fetch.invoice.get.stop"
 			doc:name="SnapTime" />
-		<!--<metrics:time config-ref="metricsConfig" beginSnapKey="fetch.invoice.get.start"-->
-			<!--endSnapKey="fetch.invoice.get.stop" category="l1p.spsp-backend.fetch.api" metricKey="FetchInvoiceGetTime"-->
-			<!--doc:name="Metrics Record" />-->
 		<exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 
@@ -619,13 +612,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<http:listener config-ref="api-httpListenerConfig" path="${scheme-adapter-service.basePath}/invoices" allowedMethods="GET" doc:name="HTTP"/>
 		<flow-ref name="common-flow" doc:name="common-flow"/>
 		<set-session-variable value="#[message.inboundProperties.'http.query.params'.invoiceUrl]"
-			variableName="invoiceUrl" doc:name="Session Variable" />
-		<!--<http:outbound-endpoint address="http://#[message.inboundProperties.'http.query.params'.invoiceUrl]"-->
-			<!--method="GET" exchange-pattern="request-response" doc:name="Generic" />-->
-        <set-variable variableName="dynamicURL" value="#[new URL(message.inboundProperties.'http.query.params'.invoiceUrl)]" doc:name="Variable"/>
+			variableName="invoiceUrl" doc:name="Session invoiceUrl" />
+		<logger level="INFO"
+				message="Received invoice url: #[message.inboundProperties.'http.query.params'.invoiceUrl]"
+				category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
+		<set-variable variableName="dynamicURL" value="#[new URL(message.inboundProperties.'http.query.params'.invoiceUrl)]" doc:name="Variable"/>
         <logger level="INFO"
-                message="Sending request to get:#[flowVars.dynamicURL.getHost()]:#[flowVars.dynamicURL.getPort()]/#[flowVars.dynamicURL.getPath()], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
-                category="com.l1p.interop.spsp-backend-fetch-invoice" doc:name="logger" />
+                message="Sending request to get: http://#[flowVars.dynamicURL.getHost()]:#[flowVars.dynamicURL.getPort()]#[flowVars.dynamicURL.getPath()], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], invoice=#[sessionVars.invoice]"
+                category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
         <http:request config-ref="overide-this-config" host="#[flowVars.dynamicURL.getHost()]" port="#[flowVars.dynamicURL.getPort()]" path="#[flowVars.dynamicURL.getPath()]"
                       method="GET" doc:name="Call GET /invoices">
             <http:request-builder>
@@ -633,6 +627,9 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
             </http:request-builder>
             <http:success-status-code-validator values="200..500" />
         </http:request>
+		<logger level="INFO"
+				message="Returning response for GET: /invoices #[message.payloadAs(java.lang.String)]"
+				category="com.l1p.interop.scheme.adapter.invoices" doc:name="logger" />
         <exception-strategy ref="interop-catch-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 

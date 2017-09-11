@@ -17,10 +17,8 @@ public class Utils {
     }
 
     public static String getData(String payload) throws IOException {
-        log.info("Payload received: {}",payload);
         Object dataObj =  JsonPath.read(payload,"$.data");
         return new ObjectMapper().writeValueAsString(dataObj);
-        //return data.replace("\"","\\\"");
 
     }
 
