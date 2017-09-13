@@ -83,7 +83,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		</choice>
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 		<logger level="INFO"
-			message="Processing complete for get:/receivers/{payee}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee], Call-Type=resolve"
+			message="Processing complete for get:/receivers/{payee}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee], Call-Type=lookup"
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 			doc:name="Property" />
@@ -132,7 +132,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 									doc:name="Save Final Response as a map" />
 								<!-- Section for calling quoteIPR -->
 								<logger level="INFO"
-									message="Posting request to ilp-service /quoteIPR to http://${ilp-host}:${ilp-service.port}/quoteIPR?ipr=#[payload.ipr], method=GET, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Call-Type=get-ILP-IPR"
+									message="Posting request to ilp-service /quoteIPR to http://${ilp-host}:${ilp-service.port}/quoteIPR?ipr=#[payload.ipr], method=GET, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Call-Type=quote-route"
 									category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                                 <metrics:snap-time config-ref="metricsConfig" snapTimeKey="get.ilp-service-quoteIPR.start" doc:name="SnapTime"/>
                                 <http:request config-ref="ilp-service-http-config" path="/quoteIPR" method="GET"
@@ -158,14 +158,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 										<json:object-to-json-transformer doc:name="Object to JSON" />
                                         <transformer ref="ledgerAdapterToActualLedgerUrlTransformer" doc:name="Transform Ledger URL"/>
 										<logger level="INFO"
-											message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Call-Type=get-ILP-IPR"
+											message="Successfully completed processing for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']. Response: #[payload], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.stop" doc:name="SnapTime"/>
                                         <metrics:time config-ref="metricsConfig" beginSnapKey="post.interop-quotes.start" endSnapKey="post.interop-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayerPostQuoteTotalTime" doc:name="Metrics Record"/>
 									</when>
 									<otherwise>
 										<logger level="INFO"
-											message="Failure response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Call-Type=get-ILP-IPR"
+											message="Failure response from ilp-service /quoteIPR: #[message.payloadAs(java.lang.String)], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
 											category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
                                         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.interop-quotes.stop" doc:name="SnapTime"/>
                                         <metrics:time config-ref="metricsConfig" beginSnapKey="post.interop-quotes.start" endSnapKey="post.interop-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayerPostQuoteTotalTime" doc:name="Metrics Record"/>
@@ -353,7 +353,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 	
 	<flow name="get:/ilpAddress:scheme-adapter-config">
 		<logger level="INFO"
-			message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/ilpAddress?account=#[message.inboundProperties.'http.query.params'.account], method=GET Payload: #[payload], Call-Type=get-ILP-IPR"
+			message="Posting ILP Service request for L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'] to http://${ilp-host}:${ilp-service.port}/ilpAddress?account=#[message.inboundProperties.'http.query.params'.account], method=GET Payload: #[payload]"
 			category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 		<http:request config-ref="ilp-service-http-config" path="/ilpAddress" method="GET"
 			doc:name="Call ilp-service ilpAddress">
@@ -396,7 +396,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         <metrics:snap-time config-ref="metricsConfig" snapTimeKey="put.dfsp-notification.stop" doc:name="SnapTime"/>
         <metrics:time config-ref="metricsConfig" beginSnapKey="put.dfsp-notification.start" endSnapKey="put.dfsp-notification.stop" category="l1p.scheme-adapter.notification.api" metricKey="PutDFSPNotification" doc:name="Metrics Record"/>
         <logger level="INFO"
-                message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status'], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Call-Type=validate-prepare"
+                message="Respose from dfsp-api /payments/{paymentId} Http Status: #[message.inboundProperties.'http.status'], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id']"
                 category="com.l1p.interop.scheme.adapter.notification" doc:name="logger" />
         <set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']" doc:name="Property"/>
 
