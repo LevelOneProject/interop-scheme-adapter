@@ -55,7 +55,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		<set-session-variable variableName="payee"
 			value="#[message.inboundProperties.'http.uri.params'.ID]" doc:name="save-uri-parameter" />
 		<logger level="INFO"
-			message="Processing request for GET on http://${dfsp-host}:${dfsp-api.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Authorization=#['Basic ']${dfsp-api.auth_value}, Call-Type=user-lookup"
+			message="Processing request for GET on http://${dfsp-host}:${dfsp-api.port}/receivers/#[sessionVars.payee], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], Authorization=#['Basic ']${dfsp-api.auth_value}, Call-Type=payee-details"
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="L1p-Trace-Id" value="#[sessionVars.'L1p-Trace-Id']"
 			doc:name="PropertyHttpL1p-Trace-Id" />
@@ -83,7 +83,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 		</choice>
 		<json:object-to-json-transformer doc:name="Object to JSON" />
 		<logger level="INFO"
-			message="Processing complete for get:/receivers/{payee}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee], Call-Type=lookup"
+			message="Processing complete for get:/receivers/{payee}, L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], payee=#[sessionVars.payee], Call-Type=resolve"
 			category="com.l1p.interop.scheme.adapter.fetch-payee" doc:name="logger" />
 		<set-property propertyName="http.status" value="#[message.inboundProperties.'http.status']"
 			doc:name="Property" />
