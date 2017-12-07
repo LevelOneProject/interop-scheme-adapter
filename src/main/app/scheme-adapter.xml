@@ -379,7 +379,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
         <set-variable variableName="paymentId" value="#[com.l1p.interop.scheme.adapter.Utils.getPaymentId(payload)]" doc:name="Variable"/>
 		<set-variable variableName="data" value="#[com.l1p.interop.scheme.adapter.Utils.getData(payload)]" doc:name="Variable"/>
-
+		<set-session-variable variableName="L1p-Trace-Id" value="#[flowVars.paymentId]"/>
 		<set-payload value="{&quot;status&quot;:&quot;prepared&quot;,&quot;data&quot;:#[flowVars.data]}" doc:name="Set Payload" mimeType="application/json"/>
 		<logger level="INFO"
                 message="Sending request to dfsp: http://${dfsp-host}:${dfsp-api.port}/payments/#[flowVars.paymentId], method=PUT Payload: #[payload], L1p-Trace-Id=#[sessionVars.'L1p-Trace-Id'], L1p-Call-Type=validate-prepare"
@@ -429,7 +429,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 			</http:request-builder>
 			<http:success-status-code-validator values="200..599" />
 		</http:request>
-        <metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
+		<metrics:snap-time config-ref="metricsConfig" snapTimeKey="post.dfsp-quotes.stop" doc:name="SnapTime"/>
         <metrics:time config-ref="metricsConfig" beginSnapKey="post.dfsp-quotes.start" endSnapKey="post.dfsp-quotes.stop" category="l1p.interop-scheme-adapter.quotes.api" metricKey="PayeeDFSPPostQuoteTime" doc:name="Metrics Record"/>
 		<choice doc:name="Check if dfsp-api /quote call is success/failure">
 			<when expression="#[message.inboundProperties.'http.status' == 200]">
@@ -439,7 +439,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 				<set-session-variable variableName="dfspQuoteResponseString" value="#[message.payloadAs(java.lang.String)]"
 									  doc:name="save-dfsp-quote-response" />
 				<set-session-variable variableName="dfspDataNodeAsString" value="#[com.l1p.interop.scheme.adapter.Utils.getData(message.payloadAs(java.lang.String))]" doc:name="Variable"/>
-				<logger level="INFO"
+                <logger level="INFO"
 						message="dfspDataNodeAsString: #[sessionVars.dfspDataNodeAsString]"
 						category="com.l1p.interop.scheme.adapter.quote" doc:name="logger" />
 				<json:json-to-object-transformer returnClass="java.util.Map"
